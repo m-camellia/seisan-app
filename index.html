@@ -75,7 +75,8 @@
   /* Items */
   .items-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     font-size: 0.88rem;
   }
 
@@ -90,6 +91,27 @@
   }
 
   .items-table th.th-item { text-align: left; }
+
+  /* 項目名列を固定 */
+  .th-sticky {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    background: #1a3a5c;
+    text-align: left;
+    min-width: 110px;
+  }
+
+  .td-sticky {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: #fff;
+    border-right: 1px solid #e8e8e8;
+  }
+
+  .items-table tr:hover .td-sticky { background: #fafafa; }
+  .total-row .td-sticky { background: #fffde7 !important; }
 
   .items-table td {
     padding: 6px 4px;
@@ -308,8 +330,9 @@ function checkPw() {
 
 <!-- Members -->
 <div class="card">
-  <h2>メンバー（最大6名）</h2>
+  <h2>メンバー</h2>
   <div class="members-grid" id="membersGrid"></div>
+  <button class="btn-add" onclick="addMember()" style="margin-top:10px">＋ メンバーを追加</button>
   <hr class="section-divider">
   <div class="payer-section">
     <label>立替払い担当：</label>
@@ -350,30 +373,27 @@ function checkPw() {
 <script>
 // ── State ──────────────────────────────────────────────
 const state = {
-  members: ['わし', 'あめ', 'あや', 'れい', 'なみ', ''],
+  members: ['わし', 'あめ', 'あや', 'れい', 'なみ'],
   payerIndex: 0,
   items: [
-    { name: 'タクシー',          amount: 6370, included: [true, true, true, true,  true,  false] },
-    { name: 'ロッカー',          amount:  800, included: [true, true, true, true,  true,  false] },
-    { name: 'チュロス',          amount: 3000, included: [true, true, true, true,  true,  false] },
-    { name: 'ビール',            amount: 3200, included: [true, true, true, false, true,  false] },
-    { name: 'ポップコーンロール', amount:  400, included: [true, true, true, true,  true,  false] },
+    { name: 'タクシー',          amount: 6370, included: [true, true, true, true,  true] },
+    { name: 'ロッカー',          amount:  800, included: [true, true, true, true,  true] },
+    { name: 'チュロス',          amount: 3000, included: [true, true, true, true,  true] },
+    { name: 'ビール',            amount: 3200, included: [true, true, true, false, true] },
+    { name: 'ポップコーンロール', amount:  400, included: [true, true, true, true,  true] },
   ],
-  // 立替担当（index=0 わし）は自動計算。他のメンバーのみ手動入力。
-  // スプレッドシートの「調整0 手動」行: あめ=-14, あや=-14, れい=-214, なみ=-14 → わし=+256（自動）
-  adjustments: [256, -14, -14, -214, -14, 0],
+  adjustments: [256, -14, -14, -214, -14],
 };
 
 // ── Helpers ─────────────────────────────────────────────
 const fmt = n => Math.round(n).toLocaleString('ja-JP');
 
-// 名前が入力されているメンバーのインデックス一覧
-const activeIdx = () => state.members.map((m, i) => i).filter(i => state.members[i] !== '');
+// 全メンバーのインデックス一覧（空スロットなし）
+const activeIdx = () => state.members.map((_, i) => i);
 
 // 各人の項目合計
 function calcItemTotals() {
   return state.members.map((_, mi) => {
-    if (state.members[mi] === '') return 0;
     return state.items.reduce((sum, item) => {
       if (!item.included[mi]) return sum;
       const cnt = activeIdx().filter(i => item.included[i]).length;
@@ -410,6 +430,8 @@ function renderMembers() {
       <span class="member-num">${i + 1}</span>
       <input type="text" value="${name}" placeholder="名前${i + 1}"
         oninput="state.members[${i}]=this.value; fullRender();">
+      <button class="btn-del" onclick="removeMember(${i})" title="削除"
+        style="${state.members.length <= 2 ? 'visibility:hidden' : ''}">×</button>
     `;
     grid.appendChild(div);
   });
@@ -442,8 +464,8 @@ function renderTable() {
   ['#', '項目名', '合計金額', ...ai.map(i => state.members[i]), ''].forEach((text, hi, arr) => {
     const th = document.createElement('th');
     th.textContent = text;
-    if (hi === 1) th.className = 'th-item';
     if (hi === 0) th.style.width = '28px';
+    if (hi === 1) th.className = 'th-sticky';
     if (hi === 2) th.style.minWidth = '100px';
     if (hi >= 3 && hi < arr.length - 1) th.style.minWidth = '56px';
     if (hi === arr.length - 1) th.style.width = '36px';
@@ -462,7 +484,7 @@ function renderTable() {
     // 金額入力: oninput でテーブル全体を再描画せず、span だけ更新する
     let cells = `
       <td style="color:#bbb;font-size:0.8rem">${idx + 1}</td>
-      <td><input class="input-item" type="text" value="${item.name}" placeholder="項目名"
+      <td class="td-sticky"><input class="input-item" type="text" value="${item.name}" placeholder="項目名"
           oninput="state.items[${idx}].name=this.value"></td>
       <td>
         <input class="input-amount" type="number" value="${item.amount || ''}" placeholder="0"
@@ -631,6 +653,25 @@ function removeItem(idx) {
   }
   renderTable();
   renderSummary();
+}
+
+function addMember() {
+  const n = state.members.length + 1;
+  state.members.push(`メンバー${n}`);
+  state.adjustments.push(0);
+  state.items.forEach(item => item.included.push(true));
+  syncPayerAdj();
+  fullRender();
+}
+
+function removeMember(i) {
+  if (state.members.length <= 2) return;
+  state.members.splice(i, 1);
+  state.adjustments.splice(i, 1);
+  state.items.forEach(item => item.included.splice(i, 1));
+  if (state.payerIndex >= state.members.length) state.payerIndex = 0;
+  syncPayerAdj();
+  fullRender();
 }
 
 function fullRender() {
