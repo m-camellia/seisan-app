@@ -48,46 +48,48 @@
   }
 
   .member-input {
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    position: relative;
+  }
+
+  .member-num {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.7rem;
+    color: #ccc;
+    pointer-events: none;
+    z-index: 1;
   }
 
   .member-input input[type="text"] {
-    flex: 1;
+    width: 100%;
     border: 1px solid #ddd;
     border-radius: 8px;
-    padding: 9px 10px;
-    font-size: 0.95rem;
+    padding: 9px 28px 9px 22px;
+    font-size: 0.9rem;
     outline: none;
     transition: border-color 0.2s;
-    min-width: 0;
   }
 
   .member-input input[type="text"]:focus { border-color: #8b6f5e; }
 
-  .member-num {
-    font-size: 0.75rem;
-    color: #bbb;
-    min-width: 16px;
-    text-align: right;
-    flex-shrink: 0;
-  }
-
   .btn-del-member {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
     background: none;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
+    border: none;
     cursor: pointer;
-    color: #bbb;
-    font-size: 0.9rem;
-    padding: 6px 9px;
-    flex-shrink: 0;
-    transition: color 0.2s, border-color 0.2s;
+    color: #ccc;
+    font-size: 0.85rem;
+    padding: 4px 4px;
     line-height: 1;
+    transition: color 0.2s;
   }
 
-  .btn-del-member:hover { color: #e55; border-color: #e55; }
+  .btn-del-member:hover { color: #e55; }
 
   /* Items */
   .items-table {
@@ -347,7 +349,7 @@
 <div class="card">
   <h2>手動調整</h2>
   <div class="adj-grid" id="adjGrid"></div>
-  <p style="font-size:0.75rem;color:#bbb;margin-top:10px;text-align:center">＋ : 負担増（余分に受け取った等）　／　− : 負担減（余分に支払った等）</p>
+  <p style="font-size:0.75rem;color:#bbb;margin-top:10px;text-align:center">＋ : 多く払う　／　− : 少なく払う</p>
 </div>
 
 <!-- Summary -->
@@ -418,7 +420,8 @@ function renderMembers() {
     div.innerHTML = `
       <span class="member-num">${i + 1}</span>
       <input type="text" value="${name}" placeholder="名前を入力"
-        oninput="state.members[${i}]=this.value; fullRender();">
+        oninput="state.members[${i}]=this.value;"
+        onblur="fullRender();">
       <button class="btn-del-member" onclick="removeMember(${i})"
         style="${state.members.length <= 2 ? 'visibility:hidden' : ''}">×</button>
     `;
