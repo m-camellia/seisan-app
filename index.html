@@ -648,6 +648,7 @@ function renderSummary() {
 
   if (payments.length === 0) {
     ul.innerHTML = '<li class="no-settlement">精算不要</li>';
+    saveState();
     return;
   }
   payments.forEach(({ from, amount }) => {
@@ -658,6 +659,7 @@ function renderSummary() {
     `;
     ul.appendChild(li);
   });
+  saveState();
 }
 
 // ── Actions ─────────────────────────────────────────────
@@ -712,6 +714,7 @@ function fullRender() {
   renderTable();
   renderAdjustments();
   renderSummary();
+  saveState();
 }
 
 // ── 保存・復元 ──────────────────────────────────────────
@@ -738,11 +741,7 @@ function loadState() {
   } catch(e) {}
 }
 
-// 全描画関数に保存を差し込む
-const _origFullRender = fullRender;
-function fullRender() { _origFullRender(); saveState(); }
-const _origRenderSummary = renderSummary;
-function renderSummary() { _origRenderSummary(); saveState(); }
+// renderSummary と fullRender の末尾に saveState を追加（上書き方式ではなく直接追記）
 
 // ── Init ────────────────────────────────────────────────
 loadState();
