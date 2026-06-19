@@ -42,35 +42,51 @@
 
   /* Members */
   .members-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    display: flex;
+    flex-direction: column;
     gap: 8px;
   }
 
   .member-input {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
   }
 
   .member-input input[type="text"] {
-    width: 100%;
+    flex: 1;
     border: 1px solid #ddd;
     border-radius: 8px;
-    padding: 8px 10px;
-    font-size: 0.95rem;
+    padding: 10px 12px;
+    font-size: 1rem;
     outline: none;
     transition: border-color 0.2s;
+    min-width: 0;
   }
 
   .member-input input[type="text"]:focus { border-color: #8b6f5e; }
 
   .member-num {
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     color: #bbb;
-    min-width: 16px;
+    min-width: 20px;
     text-align: right;
+    flex-shrink: 0;
   }
+
+  .btn-del-member {
+    background: none;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #ccc;
+    font-size: 1rem;
+    padding: 6px 10px;
+    flex-shrink: 0;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .btn-del-member:hover { color: #e55; border-color: #e55; }
 
   /* Items */
   .items-table {
@@ -305,7 +321,7 @@
   z-index:9999; gap:16px;">
   <div style="font-size:2rem">🎡</div>
   <div style="font-size:1.2rem; font-weight:700; color:#1a1a18">精算アプリ</div>
-  <input id="pw-input" type="password" placeholder="パスワードを入力"
+  <input id="pw-input" type="text" placeholder="パスワードを入力" autocomplete="off"
     style="border:1px solid #ddd; border-radius:8px; padding:10px 16px; font-size:1rem; outline:none; text-align:center; width:220px;"
     onkeydown="if(event.key==='Enter') checkPw();">
   <button onclick="checkPw()" style="
@@ -316,7 +332,7 @@
 
 <script>
 function checkPw() {
-  if (document.getElementById('pw-input').value === '0808') {
+  if (document.getElementById('pw-input').value === 'king') {
     document.getElementById('pw-overlay').style.display = 'none';
   } else {
     document.getElementById('pw-error').textContent = 'パスワードが違います';
@@ -428,9 +444,9 @@ function renderMembers() {
     div.className = 'member-input';
     div.innerHTML = `
       <span class="member-num">${i + 1}</span>
-      <input type="text" value="${name}" placeholder="名前${i + 1}"
+      <input type="text" value="${name}" placeholder="名前を入力"
         oninput="state.members[${i}]=this.value; fullRender();">
-      <button class="btn-del" onclick="removeMember(${i})" title="削除"
+      <button class="btn-del-member" onclick="removeMember(${i})"
         style="${state.members.length <= 2 ? 'visibility:hidden' : ''}">×</button>
     `;
     grid.appendChild(div);
@@ -518,7 +534,7 @@ function renderTable() {
   const tr2 = document.createElement('tr');
   tr2.className = 'total-row';
   let fcells = `<td></td>
-    <td style="text-align:left">合計</td>
+    <td class="td-sticky" style="text-align:left">合計</td>
     <td id="foot-grand" style="text-align:right;font-variant-numeric:tabular-nums">${fmt(grandTotal)}</td>`;
   ai.forEach(i => {
     fcells += `<td id="foot-${i}" style="font-variant-numeric:tabular-nums">${totals[i] > 0 ? fmt(totals[i]) : ''}</td>`;
@@ -656,12 +672,16 @@ function removeItem(idx) {
 }
 
 function addMember() {
-  const n = state.members.length + 1;
-  state.members.push(`メンバー${n}`);
+  state.members.push('');
   state.adjustments.push(0);
   state.items.forEach(item => item.included.push(true));
   syncPayerAdj();
   fullRender();
+  // 追加した入力欄にフォーカス
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('#membersGrid input[type="text"]');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  }, 50);
 }
 
 function removeMember(i) {
