@@ -42,23 +42,23 @@
 
   /* Members */
   .members-grid {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 8px;
   }
 
   .member-input {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
   }
 
   .member-input input[type="text"] {
     flex: 1;
     border: 1px solid #ddd;
     border-radius: 8px;
-    padding: 10px 12px;
-    font-size: 1rem;
+    padding: 9px 10px;
+    font-size: 0.95rem;
     outline: none;
     transition: border-color 0.2s;
     min-width: 0;
@@ -67,23 +67,24 @@
   .member-input input[type="text"]:focus { border-color: #8b6f5e; }
 
   .member-num {
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     color: #bbb;
-    min-width: 20px;
+    min-width: 16px;
     text-align: right;
     flex-shrink: 0;
   }
 
   .btn-del-member {
     background: none;
-    border: 1px solid #eee;
+    border: 1px solid #e0e0e0;
     border-radius: 6px;
     cursor: pointer;
-    color: #ccc;
-    font-size: 1rem;
-    padding: 6px 10px;
+    color: #bbb;
+    font-size: 0.9rem;
+    padding: 6px 9px;
     flex-shrink: 0;
     transition: color 0.2s, border-color 0.2s;
+    line-height: 1;
   }
 
   .btn-del-member:hover { color: #e55; border-color: #e55; }
@@ -314,34 +315,6 @@
 </head>
 <body>
 
-<!-- Password overlay -->
-<div id="pw-overlay" style="
-  position:fixed; inset:0; background:#f0f2f5;
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  z-index:9999; gap:16px;">
-  <div style="font-size:2rem">🎡</div>
-  <div style="font-size:1.2rem; font-weight:700; color:#1a1a18">精算アプリ</div>
-  <input id="pw-input" type="text" placeholder="パスワードを入力" autocomplete="off"
-    style="border:1px solid #ddd; border-radius:8px; padding:10px 16px; font-size:1rem; outline:none; text-align:center; width:220px;"
-    onkeydown="if(event.key==='Enter') checkPw();">
-  <button onclick="checkPw()" style="
-    background:#1a3a5c; color:#fff; border:none; border-radius:8px;
-    padding:10px 32px; font-size:1rem; cursor:pointer;">入る</button>
-  <div id="pw-error" style="color:#e55; font-size:0.85rem; min-height:1em;"></div>
-</div>
-
-<script>
-function checkPw() {
-  if (document.getElementById('pw-input').value === 'king') {
-    document.getElementById('pw-overlay').style.display = 'none';
-  } else {
-    document.getElementById('pw-error').textContent = 'パスワードが違います';
-    document.getElementById('pw-input').value = '';
-    document.getElementById('pw-input').focus();
-  }
-}
-</script>
-
 <h1>🎡 精算アプリ</h1>
 
 <!-- Members -->
@@ -503,9 +476,11 @@ function renderTable() {
       <td class="td-sticky"><input class="input-item" type="text" value="${item.name}" placeholder="項目名"
           oninput="state.items[${idx}].name=this.value"></td>
       <td>
-        <input class="input-amount" type="number" value="${item.amount || ''}" placeholder="0"
-          oninput="state.items[${idx}].amount=parseFloat(this.value)||0; updateItemDisplay(${idx}); renderSummary();"
-          onchange="renderTable(); renderSummary();">
+        <input class="input-amount" type="text" inputmode="numeric"
+          value="${item.amount > 0 ? fmt(item.amount) : ''}" placeholder="0"
+          onfocus="this.value=state.items[${idx}].amount||'';"
+          oninput="const v=parseInt(this.value.replace(/[^0-9]/g,''))||0; state.items[${idx}].amount=v; updateItemDisplay(${idx}); renderSummary();"
+          onblur="this.value=state.items[${idx}].amount>0?fmt(state.items[${idx}].amount):''; renderTable(); renderSummary();">
       </td>
     `;
 
@@ -695,6 +670,7 @@ function removeMember(i) {
 }
 
 function fullRender() {
+  renderMembers();
   renderPayer();
   renderTable();
   renderAdjustments();
