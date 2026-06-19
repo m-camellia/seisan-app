@@ -334,8 +334,14 @@
 </div>
 
 <script>
+// 認証済みならオーバーレイをスキップ
+if (localStorage.getItem('seisan-auth') === 'ok') {
+  document.getElementById('pw-overlay').style.display = 'none';
+}
+
 function checkPw() {
   if (document.getElementById('pw-input').value === 'king') {
+    localStorage.setItem('seisan-auth', 'ok');
     document.getElementById('pw-overlay').style.display = 'none';
   } else {
     document.getElementById('pw-error').textContent = 'パスワードが違います';
@@ -708,8 +714,39 @@ function fullRender() {
   renderSummary();
 }
 
+// ── 保存・復元 ──────────────────────────────────────────
+const STORAGE_KEY = 'seisan-app-state';
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    members: state.members,
+    payerIndex: state.payerIndex,
+    items: state.items,
+    adjustments: state.adjustments,
+  }));
+}
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return;
+    const parsed = JSON.parse(saved);
+    if (parsed.members) state.members = parsed.members;
+    if (parsed.payerIndex !== undefined) state.payerIndex = parsed.payerIndex;
+    if (parsed.items) state.items = parsed.items;
+    if (parsed.adjustments) state.adjustments = parsed.adjustments;
+  } catch(e) {}
+}
+
+// 全描画関数に保存を差し込む
+const _origFullRender = fullRender;
+function fullRender() { _origFullRender(); saveState(); }
+const _origRenderSummary = renderSummary;
+function renderSummary() { _origRenderSummary(); saveState(); }
+
 // ── Init ────────────────────────────────────────────────
-syncPayerAdj(); // 初期状態でも立替担当を同期
+loadState();
+syncPayerAdj();
 render();
 </script>
 </body>
