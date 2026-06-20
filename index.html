@@ -374,7 +374,7 @@ function checkPw() {
 
 <!-- Items -->
 <div class="card">
-  <h2>項目</h2>
+  <h2>内訳</h2>
   <div class="table-wrap">
     <table class="items-table" id="itemsTable">
       <thead><tr id="headerRow"></tr></thead>
@@ -493,7 +493,7 @@ function renderTable() {
   // ─ Header ─
   const headerRow = document.getElementById('headerRow');
   headerRow.innerHTML = '';
-  ['#', '項目名', '合計金額', ...ai.map(i => state.members[i]), ''].forEach((text, hi, arr) => {
+  ['#', '内容', '合計金額', ...ai.map(i => state.members[i]), ''].forEach((text, hi, arr) => {
     const th = document.createElement('th');
     th.textContent = text;
     if (hi === 0) th.style.width = '28px';
@@ -553,7 +553,7 @@ function renderTable() {
   tr2.className = 'total-row';
   let fcells = `<td></td>
     <td class="td-sticky" style="text-align:left">合計</td>
-    <td id="foot-grand" style="text-align:right;font-variant-numeric:tabular-nums">${fmt(grandTotal)}</td>`;
+    <td id="foot-grand" style="text-align:center;font-variant-numeric:tabular-nums">${fmt(grandTotal)}</td>`;
   ai.forEach(i => {
     fcells += `<td id="foot-${i}" style="font-variant-numeric:tabular-nums">${totals[i] > 0 ? fmt(totals[i]) : ''}</td>`;
   });
@@ -637,7 +637,7 @@ function renderSummary() {
     div.innerHTML = `
       <div class="s-name">${state.members[i]}${i === state.payerIndex ? '<span class="payer-badge">立替</span>' : ''}</div>
       <div class="s-amount">¥${fmt(net[i])}</div>
-      ${adj !== 0 ? `<div class="s-detail">項目 ${fmt(itemTotals[i])} / 調整 ${adj > 0 ? '+' : ''}${fmt(adj)}</div>` : ''}
+      ${adj !== 0 ? `<div class="s-detail">小計 ${fmt(itemTotals[i])} / 調整 ${adj > 0 ? '+' : ''}${fmt(adj)}</div>` : ''}
     `;
     grid.appendChild(div);
   });
