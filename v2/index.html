@@ -289,7 +289,7 @@ if (localStorage.getItem('seisan-auth-v2') === 'ok') {
 <div class="card">
   <h2>手動調整</h2>
   <div class="adj-grid" id="adjGrid"></div>
-  <p style="font-size:0.75rem;color:#bbb;margin-top:10px;text-align:center">＋ : 多く払う　／　− : 少なく払う</p>
+  <p style="font-size:0.75rem;color:#bbb;margin-top:10px;text-align:center">＋ : 上乗せ　／　− : 値引き</p>
 </div>
 
 <!-- Summary -->
@@ -304,7 +304,7 @@ if (localStorage.getItem('seisan-auth-v2') === 'ok') {
 <script>
 // ── State ──────────────────────────────────────────────
 const state = {
-  members: ['わし', 'あめ', 'あや', 'れい', 'なみ'],
+  members: ['わたし', 'あめ', 'あや', 'れい', 'なみ'],
   mainPayerIndex: 0,
   items: [
     { name: 'タクシー',           amount: 6370, paidBy: 0, included: [true, true, true, true,  true] },
@@ -550,7 +550,7 @@ function renderSummary() {
   settlements.forEach(({ from, to, amount }) => {
     const li = document.createElement('li');
     li.innerHTML = `
-      <span><strong>${state.members[from]}</strong> <span class="s-arrow">→</span> <strong>${state.members[to]}</strong> に支払う</span>
+      <span><strong>${state.members[from]}</strong>　<span class="s-arrow">→</span>　<strong>${state.members[to]}</strong>　へお支払い</span>
       <span class="s-pay-amount">¥${fmt(amount)}</span>
     `;
     ul.appendChild(li);
