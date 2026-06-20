@@ -550,7 +550,7 @@ function renderSummary() {
   settlements.forEach(({ from, to, amount }) => {
     const li = document.createElement('li');
     li.innerHTML = `
-      <span><strong>${state.members[from]}</strong>　<span class="s-arrow">→</span>　<strong>${state.members[to]}</strong>　へお支払い</span>
+      <span><strong>${state.members[from]}</strong> <span class="s-arrow">→</span> <strong>${state.members[to]}</strong> へお支払い</span>
       <span class="s-pay-amount">¥${fmt(amount)}</span>
     `;
     ul.appendChild(li);
