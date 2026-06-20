@@ -193,9 +193,70 @@
     .input-amount { width: 72px; }
     .select-payer { max-width: 60px; font-size: 0.75rem; }
   }
+
+  /* PW overlay */
+  #pw-overlay {
+    position: fixed; inset: 0; background: #f0f2f5;
+    display: flex; align-items: center; justify-content: center; z-index: 9999;
+  }
+
+  .pw-box {
+    background: #fff; border-radius: 16px; padding: 32px 28px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; width: 280px;
+  }
+
+  .pw-box h2 { font-size: 1.1rem; margin-bottom: 6px; color: #1a1a18; }
+  .pw-box p  { font-size: 0.82rem; color: #aaa; margin-bottom: 20px; }
+
+  #pw-input {
+    width: 100%; border: 1px solid #ddd; border-radius: 8px;
+    padding: 10px 14px; font-size: 1rem; outline: none;
+    text-align: center; letter-spacing: 0.2em; margin-bottom: 12px;
+  }
+
+  #pw-input:focus { border-color: #1a3a5c; }
+
+  #pw-btn {
+    width: 100%; background: #1a3a5c; color: #fff; border: none;
+    border-radius: 8px; padding: 10px; font-size: 0.95rem;
+    cursor: pointer; transition: opacity 0.2s;
+  }
+
+  #pw-btn:hover { opacity: 0.85; }
+  #pw-error { color: #c0392b; font-size: 0.8rem; margin-top: 8px; min-height: 1em; }
 </style>
 </head>
 <body>
+
+<!-- PW overlay -->
+<div id="pw-overlay">
+  <div class="pw-box">
+    <h2>🎡 精算アプリv2</h2>
+    <p>パスワードを入力してください</p>
+    <input id="pw-input" type="password" placeholder="password" inputmode="text">
+    <button id="pw-btn" onclick="checkPw()">入力</button>
+    <div id="pw-error"></div>
+  </div>
+</div>
+
+<script>
+function checkPw() {
+  if (document.getElementById('pw-input').value === 'king') {
+    localStorage.setItem('seisan-auth-v2', 'ok');
+    document.getElementById('pw-overlay').style.display = 'none';
+  } else {
+    document.getElementById('pw-error').textContent = 'パスワードが違います';
+  }
+}
+document.getElementById('pw-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkPw();
+});
+if (localStorage.getItem('seisan-auth-v2') === 'ok') {
+  document.getElementById('pw-overlay').style.display = 'none';
+} else {
+  setTimeout(() => document.getElementById('pw-input').focus(), 100);
+}
+</script>
 
 <h1>🎡 精算v2</h1>
 
