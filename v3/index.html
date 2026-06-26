@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>精算アプリv2</title>
+<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="精算アプリv2">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
+    background: #f0f2f5;
+    color: #1a1a1a;
+    min-height: 100vh;
+    padding: 16px;
+  }
+
+  h1 { text-align: center; font-size: 1.4rem; font-weight: 700; margin-bottom: 20px; color: #1a1a18; }
+
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+
+  .card h2 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 12px;
+  }
+
+  /* Members */
+  .members-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+
+  .member-input { position: relative; }
+
+  .member-num {
+    position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
+    font-size: 0.7rem; color: #ccc; pointer-events: none; z-index: 1;
+  }
+
+  .member-input input[type="text"] {
+    width: 100%; border: 1px solid #ddd; border-radius: 8px;
+    padding: 9px 28px 9px 22px; font-size: 0.9rem; outline: none; transition: border-color 0.2s;
+  }
+
+  .member-input input[type="text"]:focus { border-color: #8b6f5e; }
+
+  .btn-del-member {
+    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer; color: #ccc;
+    font-size: 0.85rem; padding: 4px; line-height: 1; transition: color 0.2s;
+  }
+
+  .btn-del-member:hover { color: #e55; }
+
+  .payer-section { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+  .payer-section label { font-size: 0.85rem; color: #666; }
+  .payer-section select {
+    border: 1px solid #ddd; border-radius: 8px; padding: 6px 10px;
+    font-size: 0.88rem; outline: none; cursor: pointer;
+  }
+
+  .payer-badge {
+    display: inline-block; font-size: 0.65rem;
+    background: #1a3a5c; color: #fff;
+    border-radius: 4px; padding: 1px 5px;
+    margin-left: 4px; vertical-align: middle;
+  }
+
+  /* Items table */
+  .items-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.88rem; }
+
+  .items-table th {
+    background: #1a3a5c; color: #fff; padding: 8px 6px;
+    font-weight: 600; font-size: 0.8rem; text-align: center; white-space: nowrap;
+  }
+
+  .th-sticky {
+    position: sticky; left: 0; z-index: 3; background: #1a3a5c;
+    text-align: left; min-width: 110px;
+  }
+
+  .td-sticky {
+    position: sticky; left: 0; z-index: 1; background: #fff;
+    border-right: 1px solid #e8e8e8;
+  }
+
+  .items-table tr:hover .td-sticky { background: #fafafa; }
+  .total-row .td-sticky { background: #fffde7 !important; }
+
+  .items-table td {
+    padding: 6px 4px; border-bottom: 1px solid #f0f0f0;
+    text-align: center; vertical-align: middle;
+  }
+
+  .items-table tr:last-child td { border-bottom: none; }
+  .items-table tr:hover td { background: #fafafa; }
+
+  .input-item {
+    width: 100%; border: none; background: transparent;
+    font-size: 0.88rem; outline: none; padding: 2px 4px;
+  }
+
+  .input-item:focus { background: #fffbf8; border-radius: 4px; }
+
+  .input-amount {
+    width: 90px; border: 1px solid #ddd; background: #fff; border-radius: 8px;
+    font-size: 0.88rem; text-align: right; outline: none;
+    padding: 6px 8px; transition: border-color 0.2s;
+  }
+
+  .input-amount:focus { border-color: #8b6f5e; background: #fffbf8; }
+
+  .select-payer {
+    border: 1px solid #ddd; border-radius: 6px; padding: 4px 6px;
+    font-size: 0.8rem; outline: none; cursor: pointer;
+    background: #fff; color: #333; max-width: 72px;
+  }
+
+  input[type="checkbox"] { width: 16px; height: 16px; accent-color: #1a3a5c; cursor: pointer; }
+
+  .per-person { font-size: 0.78rem; color: #8b6f5e; font-variant-numeric: tabular-nums; min-height: 1em; }
+
+  .btn-add {
+    display: flex; align-items: center; gap: 6px; background: none;
+    border: 1.5px dashed #ccc; border-radius: 8px; padding: 8px 14px;
+    cursor: pointer; font-size: 0.85rem; color: #999; margin-top: 10px;
+    width: 100%; justify-content: center; transition: border-color 0.2s, color 0.2s;
+  }
+
+  .btn-add:hover { border-color: #8b6f5e; color: #8b6f5e; }
+
+  .btn-del {
+    background: none; border: none; cursor: pointer; color: #ccc;
+    font-size: 1rem; padding: 2px 6px; border-radius: 4px; transition: color 0.2s;
+  }
+
+  .btn-del:hover { color: #e55; }
+
+  /* Adjustments */
+  .adj-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .adj-item { display: flex; flex-direction: column; gap: 4px; }
+  .adj-label { font-size: 0.78rem; color: #888; font-weight: 600; }
+
+  .adj-input {
+    border: 1px solid #ddd; border-radius: 8px; padding: 8px 10px;
+    font-size: 0.95rem; text-align: right; outline: none;
+    transition: border-color 0.2s; width: 100%;
+  }
+
+  .adj-input:focus { border-color: #8b6f5e; }
+
+  /* Summary */
+  .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+
+  .summary-card { background: #f7f4ef; border-radius: 10px; padding: 10px 12px; text-align: center; }
+  .summary-card .s-name { font-size: 0.8rem; color: #888; margin-bottom: 4px; }
+  .summary-card .s-amount { font-size: 1.2rem; font-weight: 700; color: #1a1a18; font-variant-numeric: tabular-nums; }
+  .summary-card .s-detail { font-size: 0.72rem; color: #8b6f5e; margin-top: 2px; }
+  .summary-card.s-receive .s-amount { color: #2a7a4a; }
+  .summary-card.s-pay .s-amount { color: #c0392b; }
+
+  .settlement-list { list-style: none; }
+  .settlement-list li {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 12px; background: #f7f4ef; border-radius: 8px;
+    margin-bottom: 8px; font-size: 0.9rem;
+  }
+  .settlement-list li:last-child { margin-bottom: 0; }
+  .s-arrow { color: #8b6f5e; margin: 0 8px; }
+  .s-pay-amount { font-weight: 700; color: #1a3a5c; font-variant-numeric: tabular-nums; }
+  .no-settlement { text-align: center; color: #bbb; font-size: 0.9rem; padding: 12px 0; }
+
+  .total-row td { background: #fffde7 !important; font-weight: 700; font-size: 0.9rem; padding-top: 8px; padding-bottom: 8px; }
+
+  .section-divider { border: none; border-top: 1px solid #eee; margin: 12px 0; }
+  .table-wrap { overflow-x: auto; }
+
+  @media (max-width: 480px) {
+    .members-grid, .adj-grid, .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    .input-amount { width: 72px; }
+    .select-payer { max-width: 60px; font-size: 0.75rem; }
+  }
+
+  /* PW overlay */
+  #pw-overlay {
+    position: fixed; inset: 0; background: #f0f2f5;
+    display: flex; align-items: center; justify-content: center; z-index: 9999;
+  }
+
+  .pw-box {
+    background: #fff; border-radius: 16px; padding: 32px 28px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; width: 280px;
+  }
+
+  .pw-box h2 { font-size: 1.1rem; margin-bottom: 6px; color: #1a1a18; }
+  .pw-box p  { font-size: 0.82rem; color: #aaa; margin-bottom: 20px; }
+
+  #pw-input {
+    width: 100%; border: 1px solid #ddd; border-radius: 8px;
+    padding: 10px 14px; font-size: 1rem; outline: none;
+    text-align: center; letter-spacing: 0.2em; margin-bottom: 12px;
+  }
+
+  #pw-input:focus { border-color: #1a3a5c; }
+
+  #pw-btn {
+    width: 100%; background: #1a3a5c; color: #fff; border: none;
+    border-radius: 8px; padding: 10px; font-size: 0.95rem;
+    cursor: pointer; transition: opacity 0.2s;
+  }
+
+  #pw-btn:hover { opacity: 0.85; }
+  #pw-error { color: #c0392b; font-size: 0.8rem; margin-top: 8px; min-height: 1em; }
+</style>
+</head>
+<body>
+
+<!-- PW overlay -->
+<div id="pw-overlay">
+  <div class="pw-box">
+    <h2>🎡 精算アプリ</h2>
+    <p>パスワードを入力してください</p>
+    <input id="pw-input" type="password" placeholder="password" inputmode="text">
+    <button id="pw-btn" onclick="checkPw()">入力</button>
+    <div id="pw-error"></div>
+  </div>
+</div>
+
+<script>
+function checkPw() {
+  if (document.getElementById('pw-input').value === 'king') {
+    localStorage.setItem('seisan-auth-v2', 'ok');
+    document.getElementById('pw-overlay').style.display = 'none';
+  } else {
+    document.getElementById('pw-error').textContent = 'パスワードが違います';
+  }
+}
+document.getElementById('pw-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkPw();
+});
+if (localStorage.getItem('seisan-auth-v2') === 'ok') {
+  document.getElementById('pw-overlay').style.display = 'none';
+} else {
+  setTimeout(() => document.getElementById('pw-input').focus(), 100);
+}
+</script>
+
+<h1>🎡 精算</h1>
+
+<!-- Members -->
+<div class="card">
+  <h2>メンバー</h2>
+  <div class="members-grid" id="membersGrid"></div>
+  <button class="btn-add" onclick="addMember()" style="margin-top:10px">＋ メンバーを追加</button>
+  <hr class="section-divider">
+  <div class="payer-section">
+    <label>立替払い主担当：</label>
+    <select id="mainPayerSelect"></select>
+  </div>
+</div>
+
+<!-- Items -->
+<div class="card">
+  <h2>内訳</h2>
+  <div class="table-wrap">
+    <table class="items-table" id="itemsTable">
+      <thead><tr id="headerRow"></tr></thead>
+      <tbody id="itemsBody"></tbody>
+      <tfoot id="itemsFoot"></tfoot>
+    </table>
+  </div>
+  <button class="btn-add" onclick="addItem()">＋ 内訳を追加</button>
+  <hr class="section-divider">
+  <h2>備考</h2>
+  <textarea id="memo" placeholder="メモを入力..." rows="1"
+    style="width:100%;border:1px solid #ddd;border-radius:8px;padding:10px 12px;font-size:0.88rem;font-family:inherit;resize:none;outline:none;color:#1a1a18;line-height:1.6;overflow:hidden;"
+    oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';saveState()"
+    onfocus="this.style.borderColor='#8b6f5e'"
+    onblur="this.style.borderColor='#ddd'"></textarea>
+</div>
+
+<!-- Adjustments -->
+<div class="card">
+  <h2>手動調整</h2>
+  <div class="adj-grid" id="adjGrid"></div>
+  <p style="font-size:0.75rem;color:#bbb;margin-top:10px;text-align:center">＋ : 上乗せ　／　− : 値引き</p>
+</div>
+
+<!-- Summary -->
+<div class="card">
+  <h2>各自の負担額</h2>
+  <div class="summary-grid" id="summaryGrid"></div>
+  <hr class="section-divider">
+  <h2>精算方法</h2>
+  <ul class="settlement-list" id="settlementList"></ul>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────
+const state = {
+  members: ['わたし', 'あめ', 'あや', 'れい', 'なみ'],
+  mainPayerIndex: 0,
+  items: [
+    { name: 'タクシー',           amount: 6370, paidBy: 0, included: [true, true, true, true,  true] },
+    { name: 'ロッカー',           amount:  800, paidBy: 0, included: [true, true, true, true,  true] },
+    { name: 'チュロス',           amount: 3000, paidBy: 0, included: [true, true, true, true,  true] },
+    { name: 'ビール',             amount: 3200, paidBy: 0, included: [true, true, true, false, true] },
+    { name: 'ポップコーン',        amount:  400, paidBy: 0, included: [true, true, true, true,  true] },
+  ],
+  adjustments: [0, 0, 0, 0, 0],
+};
+
+// ── Helpers ─────────────────────────────────────────────
+function fmt(n) { return Math.round(n).toLocaleString('ja-JP'); }
+function activeIdx() { return state.members.map((_, i) => i); }
+
+function calcBurdens() {
+  return state.members.map((_, mi) =>
+    state.items.reduce((sum, item) => {
+      if (!item.included[mi]) return sum;
+      const cnt = activeIdx().filter(i => item.included[i]).length;
+      return sum + (cnt > 0 ? item.amount / cnt : 0);
+    }, 0)
+  );
+}
+
+function calcPaid() {
+  return state.members.map((_, mi) =>
+    state.items.reduce((sum, item) => sum + (item.paidBy === mi ? item.amount : 0), 0)
+  );
+}
+
+// ── Render ──────────────────────────────────────────────
+function renderMembers() {
+  const grid = document.getElementById('membersGrid');
+  grid.innerHTML = '';
+  state.members.forEach((name, i) => {
+    const div = document.createElement('div');
+    div.className = 'member-input';
+    div.innerHTML = `
+      <span class="member-num">${i + 1}</span>
+      <input type="text" value="${name}" placeholder="名前を入力"
+        oninput="state.members[${i}]=this.value;"
+        onblur="fullRender();">
+      <button class="btn-del-member" onclick="removeMember(${i})"
+        style="${state.members.length <= 2 ? 'visibility:hidden' : ''}">×</button>
+    `;
+    grid.appendChild(div);
+  });
+  renderMainPayer();
+}
+
+function renderMainPayer() {
+  const sel = document.getElementById('mainPayerSelect');
+  if (!sel) return;
+  sel.innerHTML = '';
+  state.members.forEach((name, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = name || `メンバー${i + 1}`;
+    if (i === state.mainPayerIndex) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  sel.onchange = () => {
+    state.mainPayerIndex = +sel.value;
+    syncMainPayerAdj();
+    renderAdjustments();
+    renderSummary();
+  };
+}
+
+function renderTable() {
+  const ai = activeIdx();
+
+  // Header
+  const headerRow = document.getElementById('headerRow');
+  headerRow.innerHTML = '';
+  const headers = ['#', '内容', '合計金額', '支払者', ...ai.map(i => state.members[i]), ''];
+  headers.forEach((text, hi) => {
+    const th = document.createElement('th');
+    th.textContent = text;
+    if (hi === 0) th.style.width = '24px';
+    if (hi === 1) th.className = 'th-sticky';
+    if (hi === 2) th.style.minWidth = '96px';
+    if (hi === 3) th.style.minWidth = '72px';
+    if (hi >= 4 && hi < headers.length - 1) th.style.minWidth = '52px';
+    if (hi === headers.length - 1) th.style.width = '32px';
+    headerRow.appendChild(th);
+  });
+
+  // Body
+  const tbody = document.getElementById('itemsBody');
+  tbody.innerHTML = '';
+
+  state.items.forEach((item, idx) => {
+    const cnt = ai.filter(i => item.included[i]).length;
+    const per = cnt > 0 ? item.amount / cnt : 0;
+
+    const payerOptions = state.members.map((m, mi) =>
+      `<option value="${mi}" ${item.paidBy === mi ? 'selected' : ''}>${m}</option>`
+    ).join('');
+
+    const tr = document.createElement('tr');
+    let cells = `
+      <td style="color:#bbb;font-size:0.8rem">${idx + 1}</td>
+      <td class="td-sticky">
+        <input class="input-item" type="text" value="${item.name}" placeholder="内容"
+          oninput="state.items[${idx}].name=this.value">
+      </td>
+      <td>
+        <input class="input-amount" type="text" inputmode="numeric"
+          value="${item.amount > 0 ? fmt(item.amount) : ''}" placeholder="0"
+          onfocus="this.value=state.items[${idx}].amount||'';"
+          oninput="const v=parseInt(this.value.replace(/[^0-9]/g,''))||0; state.items[${idx}].amount=v; updateItemDisplay(${idx}); renderSummary();"
+          onblur="this.value=state.items[${idx}].amount>0?fmt(state.items[${idx}].amount):''; renderTable(); renderSummary();">
+      </td>
+      <td>
+        <select class="select-payer"
+          onchange="state.items[${idx}].paidBy=+this.value; renderSummary();">
+          ${payerOptions}
+        </select>
+      </td>
+    `;
+
+    ai.forEach(mi => {
+      cells += `<td>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+          <input type="checkbox" ${item.included[mi] ? 'checked' : ''}
+            onchange="state.items[${idx}].included[${mi}]=this.checked; renderTable(); renderSummary();">
+          <span class="per-person" id="per-${idx}-${mi}">${item.included[mi] && item.amount > 0 ? fmt(per) : ''}</span>
+        </div>
+      </td>`;
+    });
+
+    cells += `<td><button class="btn-del" onclick="removeItem(${idx})">×</button></td>`;
+    tr.innerHTML = cells;
+    tbody.appendChild(tr);
+  });
+
+  // Footer
+  const tfoot = document.getElementById('itemsFoot');
+  tfoot.innerHTML = '';
+  const burdens = calcBurdens();
+  const grandTotal = state.items.reduce((s, item) => s + item.amount, 0);
+
+  const tr2 = document.createElement('tr');
+  tr2.className = 'total-row';
+  let fcells = `<td></td>
+    <td class="td-sticky" style="text-align:left">合計</td>
+    <td style="text-align:center;font-variant-numeric:tabular-nums">${fmt(grandTotal)}</td>
+    <td></td>`;
+  ai.forEach(i => {
+    fcells += `<td id="foot-${i}" style="font-variant-numeric:tabular-nums">${burdens[i] > 0 ? fmt(burdens[i]) : ''}</td>`;
+  });
+  fcells += '<td></td>';
+  tr2.innerHTML = fcells;
+  tfoot.appendChild(tr2);
+}
+
+function updateItemDisplay(idx) {
+  const item = state.items[idx];
+  const ai = activeIdx();
+  const cnt = ai.filter(i => item.included[i]).length;
+  const per = cnt > 0 ? item.amount / cnt : 0;
+
+  ai.forEach(mi => {
+    const span = document.getElementById(`per-${idx}-${mi}`);
+    if (span) span.textContent = item.included[mi] && item.amount > 0 ? fmt(per) : '';
+  });
+
+  const burdens = calcBurdens();
+  ai.forEach(i => {
+    const el = document.getElementById(`foot-${i}`);
+    if (el) el.textContent = burdens[i] > 0 ? fmt(burdens[i]) : '';
+  });
+}
+
+function syncMainPayerAdj() {
+  const mi = state.mainPayerIndex;
+  const othersSum = state.adjustments.reduce((s, v, i) => i === mi ? s : s + v, 0);
+  state.adjustments[mi] = -othersSum;
+}
+
+function renderAdjustments() {
+  const grid = document.getElementById('adjGrid');
+  grid.innerHTML = '';
+  syncMainPayerAdj();
+  activeIdx().forEach(i => {
+    const isMain = i === state.mainPayerIndex;
+    const div = document.createElement('div');
+    div.className = 'adj-item';
+    if (isMain) {
+      div.innerHTML = `
+        <span class="adj-label" style="color:#1a3a5c">${state.members[i]}（主担当・自動）</span>
+        <input id="adj-main" class="adj-input" type="number" value="${state.adjustments[i] || 0}"
+          readonly style="background:#f0f4f8;color:#1a3a5c;cursor:not-allowed;border-color:#c5d3e0;">
+      `;
+    } else {
+      div.innerHTML = `
+        <span class="adj-label">${state.members[i]}</span>
+        <input class="adj-input" type="number" value="${state.adjustments[i] || ''}" placeholder="0"
+          oninput="const v=parseFloat(this.value); state.adjustments[${i}]=isNaN(v)?0:v; syncMainPayerAdj(); const el=document.getElementById('adj-main'); if(el) el.value=state.adjustments[state.mainPayerIndex]; renderSummary();">
+      `;
+    }
+    grid.appendChild(div);
+  });
+}
+
+function renderSummary() {
+  const burdens = calcBurdens();
+  const paid = calcPaid();
+  const ai = activeIdx();
+
+  // 各自の負担額 = 割り勘分 + 手動調整（合計は必ず内訳合計と一致）
+  const netBurden = ai.map(i => burdens[i] + state.adjustments[i]);
+
+  // 精算の方向：paid - netBurden が正なら受取、負なら支払
+  const balance = ai.map(i => paid[i] - netBurden[i]);
+
+  // Summary cards（各自の負担額を表示）
+  const grid = document.getElementById('summaryGrid');
+  grid.innerHTML = '';
+  ai.forEach(i => {
+    const div = document.createElement('div');
+    div.className = 'summary-card';
+    div.innerHTML = `
+      <div class="s-name">${state.members[i]}${i === state.mainPayerIndex ? '<span class="payer-badge">主担当</span>' : ''}</div>
+      <div class="s-amount">¥${fmt(netBurden[i])}</div>
+      <div class="s-detail">小計 ¥${fmt(burdens[i])} / 調整 ${state.adjustments[i] >= 0 ? '+' : ''}${fmt(state.adjustments[i])}</div>
+    `;
+    grid.appendChild(div);
+  });
+
+  // Settlement（最小取引数）
+  const ul = document.getElementById('settlementList');
+  ul.innerHTML = '';
+  const settlements = simplifyDebts(ai.map(i => ({ i, b: balance[i] })));
+
+  if (settlements.length === 0) {
+    ul.innerHTML = '<li class="no-settlement">精算不要</li>';
+    saveState();
+    return;
+  }
+  settlements.forEach(({ from, to, amount }) => {
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <span><strong>${state.members[from]}</strong> <span class="s-arrow">→</span> <strong>${state.members[to]}</strong> へお支払い</span>
+      <span class="s-pay-amount">¥${fmt(amount)}</span>
+    `;
+    ul.appendChild(li);
+  });
+  saveState();
+}
+
+function simplifyDebts(balances) {
+  const eps = 1;
+  const receivers = balances.filter(x => x.b > eps).map(x => ({ i: x.i, amt: x.b }));
+  const payers    = balances.filter(x => x.b < -eps).map(x => ({ i: x.i, amt: -x.b }));
+  receivers.sort((a, b) => b.amt - a.amt);
+  payers.sort((a, b) => b.amt - a.amt);
+
+  const result = [];
+  let ri = 0, pi = 0;
+  while (ri < receivers.length && pi < payers.length) {
+    const pay = Math.min(receivers[ri].amt, payers[pi].amt);
+    result.push({ from: payers[pi].i, to: receivers[ri].i, amount: pay });
+    receivers[ri].amt -= pay;
+    payers[pi].amt -= pay;
+    if (receivers[ri].amt < eps) ri++;
+    if (payers[pi].amt < eps) pi++;
+  }
+  return result;
+}
+
+// ── Actions ──────────────────────────────────────────────
+function addItem() {
+  state.items.push({ name: '', amount: 0, paidBy: 0, included: state.members.map(() => true) });
+  renderTable();
+  renderSummary();
+  setTimeout(() => {
+    const rows = document.querySelectorAll('#itemsBody tr');
+    if (rows.length) rows[rows.length - 1].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 50);
+}
+
+function removeItem(idx) {
+  if (state.items.length <= 1) {
+    state.items[0] = { name: '', amount: 0, paidBy: 0, included: state.members.map(() => true) };
+  } else {
+    state.items.splice(idx, 1);
+  }
+  renderTable();
+  renderSummary();
+}
+
+function addMember() {
+  state.members.push('');
+  state.adjustments.push(0);
+  state.items.forEach(item => item.included.push(true));
+  fullRender();
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('#membersGrid input[type="text"]');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  }, 50);
+}
+
+function removeMember(i) {
+  if (state.members.length <= 2) return;
+  state.members.splice(i, 1);
+  state.adjustments.splice(i, 1);
+  state.items.forEach(item => {
+    item.included.splice(i, 1);
+    if (item.paidBy === i) item.paidBy = 0;
+    else if (item.paidBy > i) item.paidBy--;
+  });
+  fullRender();
+}
+
+function fullRender() {
+  renderMembers();
+  renderTable();
+  renderAdjustments();
+  renderSummary();
+  saveState();
+}
+
+// ── 保存・復元 ──────────────────────────────────────────
+const STORAGE_KEY = 'seisan-app-v3';
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    members: state.members,
+    mainPayerIndex: state.mainPayerIndex,
+    items: state.items,
+    adjustments: state.adjustments,
+    memo: document.getElementById('memo')?.value ?? '',
+  }));
+}
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return;
+    const p = JSON.parse(saved);
+    if (p.members)                    state.members        = p.members;
+    if (p.mainPayerIndex !== undefined) state.mainPayerIndex = p.mainPayerIndex;
+    if (p.items)                      state.items          = p.items;
+    if (p.adjustments)                state.adjustments    = p.adjustments;
+    if (p.memo !== undefined) {
+      const el = document.getElementById('memo');
+      if (el) { el.value = p.memo; el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+    }
+  } catch(e) {}
+}
+
+// ── Init ─────────────────────────────────────────────────
+loadState();
+fullRender();
+</script>
+</body>
+</html>
