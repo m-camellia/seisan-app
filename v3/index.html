@@ -504,16 +504,18 @@ function renderAdjustments() {
     const div = document.createElement('div');
     div.className = 'adj-item';
     if (isMain) {
+      const v0 = state.adjustments[i];
+      const v0disp = v0 > 0 ? '+' + v0 : v0 < 0 ? String(v0) : '0';
       div.innerHTML = `
         <span class="adj-label" style="color:#1a3a5c">${state.members[i]}（主担当・自動）</span>
-        <input id="adj-main" class="adj-input" type="number" value="${state.adjustments[i] || 0}"
-          readonly style="background:#f0f4f8;color:#1a3a5c;cursor:not-allowed;border-color:#c5d3e0;">
+        <input id="adj-main" class="adj-input" type="text" value="${v0disp}"
+          readonly style="background:#f0f4f8;color:#1a3a5c;cursor:not-allowed;border-color:#c5d3e0;text-align:right;">
       `;
     } else {
       div.innerHTML = `
         <span class="adj-label">${state.members[i]}</span>
-        <input class="adj-input" type="number" value="${state.adjustments[i] || ''}" placeholder="0"
-          oninput="const v=parseFloat(this.value); state.adjustments[${i}]=isNaN(v)?0:v; syncMainPayerAdj(); const el=document.getElementById('adj-main'); if(el) el.value=state.adjustments[state.mainPayerIndex]; renderSummary();">
+        <input class="adj-input" type="text" inputmode="numeric" value="${state.adjustments[i] || ''}" placeholder="0"
+          oninput="const v=parseFloat(this.value); state.adjustments[${i}]=isNaN(v)?0:v; syncMainPayerAdj(); const el=document.getElementById('adj-main'); if(el){ const mv=state.adjustments[state.mainPayerIndex]; el.value=mv>0?'+'+mv:mv<0?String(mv):'0'; } renderSummary();">
       `;
     }
     grid.appendChild(div);
