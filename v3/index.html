@@ -819,7 +819,25 @@ async function exportImage() {
   // 新しいタブで開く
   const img = canvas.toDataURL('image/png');
   const tab = window.open();
-  tab.document.write(`<img src="${img}" style="max-width:100%;">`);
+  tab.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>精算レポート</title>
+  <style>
+    body { margin: 0; background: #f0f2f5; }
+    img { display: block; max-width: 100%; }
+    #close-btn {
+      position: fixed; top: 16px; right: 16px;
+      background: rgba(0,0,0,0.55); color: #fff;
+      border: none; border-radius: 20px;
+      padding: 8px 18px; font-size: 0.9rem;
+      cursor: pointer; font-family: sans-serif;
+      backdrop-filter: blur(4px); z-index: 999;
+    }
+  </style>
+  </head><body>
+  <button id="close-btn" onclick="window.close()">✕ 閉じる</button>
+  <img src="${img}">
+  </body></html>`);
   tab.document.close();
 }
 
