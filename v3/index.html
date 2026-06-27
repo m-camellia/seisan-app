@@ -680,6 +680,7 @@ fullRender();
 
 // ── 手動調整リセット ──────────────────────────────────────
 function resetAdjustments() {
+  if (!confirm('手動調整の入力情報をリセットしますか？')) return;
   state.adjustments = state.members.map(() => 0);
   renderAdjustments();
   renderSummary();
