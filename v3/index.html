@@ -228,9 +228,31 @@
 
   #pw-btn:hover { opacity: 0.85; }
   #pw-error { color: #c0392b; font-size: 0.8rem; margin-top: 8px; min-height: 1em; }
+  #ios-dialog-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4); z-index: 9997;
+    align-items: center; justify-content: center;
+  }
+  #ios-dialog-overlay.show { display: flex; }
+  #ios-dialog {
+    background: rgba(242,242,247,0.98);
+    border-radius: 14px; width: 270px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    overflow: hidden; font-family: inherit;
+  }
+  #ios-dialog .ios-dialog-body { padding: 16px 20px 12px; text-align: center; }
+  #ios-dialog .ios-dialog-title { font-size: 0.95rem; font-weight: 700; color: #1a1a1a; margin-bottom: 6px; }
+  #ios-dialog .ios-dialog-msg { font-size: 0.82rem; color: #555; }
+  #ios-dialog .ios-dialog-btns { display: flex; border-top: 0.5px solid #c4c4c6; }
+  #ios-dialog .ios-dialog-btns button {
+    flex: 1; padding: 12px 0; background: none; border: none;
+    font-size: 0.95rem; cursor: pointer; font-family: inherit;
+  }
+  #ios-dialog .ios-dialog-btns button:first-child { border-right: 0.5px solid #c4c4c6; color: #007aff; }
+  #ios-dialog .ios-dialog-btns button:last-child { color: #ff3b30; font-weight: 700; }
   #toast {
-    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
-    background: #1a3a5c; color: #fff; padding: 12px 24px;
+    position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+    background: #2a7a4a; color: #fff; padding: 12px 24px;
     border-radius: 24px; font-size: 0.9rem; font-family: inherit;
     opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 9998;
     white-space: nowrap;
@@ -241,7 +263,18 @@
 </head>
 <body>
 
-<div id="toast"></div>
+<div id="ios-dialog-overlay">
+  <div id="ios-dialog">
+    <div class="ios-dialog-body">
+      <div class="ios-dialog-title">入力情報をリセット</div>
+      <div class="ios-dialog-msg">手動調整の入力情報をリセットします。この操作は元に戻せません。</div>
+    </div>
+    <div class="ios-dialog-btns">
+      <button onclick="hideResetConfirm()">キャンセル</button>
+      <button onclick="resetAdjustments()">リセット</button>
+    </div>
+  </div>
+</div>
 
 <!-- PW overlay -->
 <div id="pw-overlay">
@@ -312,14 +345,7 @@ if (localStorage.getItem('seisan-auth-v2') === 'ok') {
   <h2>手動調整</h2>
   <div class="adj-grid" id="adjGrid"></div>
   <p style="font-size:0.75rem;color:#bbb;margin-top:10px;text-align:center">＋ 上乗せ　／　− 値引き</p>
-  <div id="reset-area" style="margin-top:10px;">
-    <button class="btn-backup" onclick="showResetConfirm()" id="reset-btn" style="display:block;width:100%;padding:8px;background:none;border:1.5px dashed #ccc;border-radius:8px;font-size:0.82rem;color:#999;cursor:pointer;font-family:inherit;transition:border-color 0.2s,color 0.2s;" onmouseover="this.style.borderColor='#e55';this.style.color='#e55'" onmouseout="this.style.borderColor='#ccc';this.style.color='#999'">± 入力情報をリセット</button>
-    <div id="reset-confirm" style="display:none;text-align:center;padding:8px 0;font-size:0.82rem;color:#888;">
-      本当にリセットしますか？
-      <button onclick="resetAdjustments()" style="margin-left:10px;padding:4px 12px;background:#e55;color:#fff;border:none;border-radius:6px;font-size:0.82rem;cursor:pointer;font-family:inherit;">はい</button>
-      <button onclick="hideResetConfirm()" style="margin-left:6px;padding:4px 12px;background:#eee;color:#666;border:none;border-radius:6px;font-size:0.82rem;cursor:pointer;font-family:inherit;">キャンセル</button>
-    </div>
-  </div>
+  <button class="btn-backup" onclick="showResetConfirm()" style="display:block;width:100%;margin-top:10px;padding:8px;background:none;border:1.5px dashed #ccc;border-radius:8px;font-size:0.82rem;color:#999;cursor:pointer;font-family:inherit;transition:border-color 0.2s,color 0.2s;" onmouseover="this.style.borderColor='#e55';this.style.color='#e55'" onmouseout="this.style.borderColor='#ccc';this.style.color='#999'">± 入力情報をリセット</button>
 </div>
 
 <!-- Summary -->
@@ -705,12 +731,10 @@ function showToast(msg) {
 
 // ── 手動調整リセット ──────────────────────────────────────
 function showResetConfirm() {
-  document.getElementById('reset-btn').style.display = 'none';
-  document.getElementById('reset-confirm').style.display = 'block';
+  document.getElementById('ios-dialog-overlay').classList.add('show');
 }
 function hideResetConfirm() {
-  document.getElementById('reset-btn').style.display = 'block';
-  document.getElementById('reset-confirm').style.display = 'none';
+  document.getElementById('ios-dialog-overlay').classList.remove('show');
 }
 function resetAdjustments() {
   hideResetConfirm();
@@ -840,5 +864,6 @@ function backupImport(file) {
   📥 バックアップファイルから復元
   <input type="file" accept=".json,.txt" style="display:none" onchange="backupImport(this.files[0]); this.value='';">
 </label>
+<div id="toast"></div>
 </body>
 </html>
