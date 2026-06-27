@@ -302,7 +302,7 @@ if (localStorage.getItem('seisan-auth-v2') === 'ok') {
   <h2>手動調整</h2>
   <div class="adj-grid" id="adjGrid"></div>
   <p style="font-size:0.75rem;color:#bbb;margin-top:10px;text-align:center">＋ 上乗せ　／　− 値引き</p>
-  <button class="btn-backup" onclick="resetAdjustments()" style="display:block;width:100%;margin-top:10px;padding:8px;background:none;border:1px solid #ddd;border-radius:8px;font-size:0.82rem;color:#aaa;cursor:pointer;font-family:inherit;transition:border-color 0.2s,color 0.2s;" onmouseover="this.style.borderColor='#e55';this.style.color='#e55'" onmouseout="this.style.borderColor='#ddd';this.style.color='#aaa'">↩️ 入力情報をリセット</button>
+  <button class="btn-backup" onclick="resetAdjustments()" style="display:block;width:100%;margin-top:10px;padding:8px;background:none;border:1.5px dashed #ccc;border-radius:8px;font-size:0.82rem;color:#999;cursor:pointer;font-family:inherit;transition:border-color 0.2s,color 0.2s;" onmouseover="this.style.borderColor='#e55';this.style.color='#e55'" onmouseout="this.style.borderColor='#ccc';this.style.color='#999'">± 入力情報をリセット</button>
 </div>
 
 <!-- Summary -->
@@ -782,6 +782,7 @@ function backupImport(file) {
         if (el) { el.value = p.memo; el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
       }
       saveState();
+      alert('バックアップファイルから復元完了！');
     } catch(err) {
       alert('ファイルの読み込みに失敗しました。');
     }
