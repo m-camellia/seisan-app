@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>精算アプリv2</title>
+<title>精算アプリv3</title>
 <link rel="icon" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="manifest" href="manifest.json">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="精算アプリv2">
+<meta name="apple-mobile-web-app-title" content="精算アプリv3">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -162,6 +162,9 @@
   }
 
   .adj-input:focus { border-color: #8b6f5e; }
+  .adj-input[type="number"]::-webkit-inner-spin-button,
+  .adj-input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  .adj-input[type="number"] { -moz-appearance: textfield; }
 
   /* Summary */
   .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
@@ -510,7 +513,7 @@ function renderAdjustments() {
       div.innerHTML = `
         <span class="adj-label" style="color:#1a3a5c">${state.members[i]}（主担当・自動）</span>
         <input id="adj-main" class="adj-input" type="text" value="${v0disp}"
-          readonly style="background:#f0f4f8;color:#1a3a5c;cursor:not-allowed;border-color:#c5d3e0;text-align:right;padding-right:22px;">
+          readonly style="background:#f0f4f8;color:#1a3a5c;cursor:not-allowed;border-color:#c5d3e0;text-align:right;">
       `;
     } else {
       div.innerHTML = `
