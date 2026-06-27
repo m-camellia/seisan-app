@@ -228,10 +228,20 @@
 
   #pw-btn:hover { opacity: 0.85; }
   #pw-error { color: #c0392b; font-size: 0.8rem; margin-top: 8px; min-height: 1em; }
+  #toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: #1a3a5c; color: #fff; padding: 12px 24px;
+    border-radius: 24px; font-size: 0.9rem; font-family: inherit;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 9998;
+    white-space: nowrap;
+  }
+  #toast.show { opacity: 1; }
   #memo::placeholder { color: #999; font-size: 0.85rem; }
 </style>
 </head>
 <body>
+
+<div id="toast"></div>
 
 <!-- PW overlay -->
 <div id="pw-overlay">
@@ -302,7 +312,14 @@ if (localStorage.getItem('seisan-auth-v2') === 'ok') {
   <h2>手動調整</h2>
   <div class="adj-grid" id="adjGrid"></div>
   <p style="font-size:0.75rem;color:#bbb;margin-top:10px;text-align:center">＋ 上乗せ　／　− 値引き</p>
-  <button class="btn-backup" onclick="resetAdjustments()" style="display:block;width:100%;margin-top:10px;padding:8px;background:none;border:1.5px dashed #ccc;border-radius:8px;font-size:0.82rem;color:#999;cursor:pointer;font-family:inherit;transition:border-color 0.2s,color 0.2s;" onmouseover="this.style.borderColor='#e55';this.style.color='#e55'" onmouseout="this.style.borderColor='#ccc';this.style.color='#999'">± 入力情報をリセット</button>
+  <div id="reset-area" style="margin-top:10px;">
+    <button class="btn-backup" onclick="showResetConfirm()" id="reset-btn" style="display:block;width:100%;padding:8px;background:none;border:1.5px dashed #ccc;border-radius:8px;font-size:0.82rem;color:#999;cursor:pointer;font-family:inherit;transition:border-color 0.2s,color 0.2s;" onmouseover="this.style.borderColor='#e55';this.style.color='#e55'" onmouseout="this.style.borderColor='#ccc';this.style.color='#999'">± 入力情報をリセット</button>
+    <div id="reset-confirm" style="display:none;text-align:center;padding:8px 0;font-size:0.82rem;color:#888;">
+      本当にリセットしますか？
+      <button onclick="resetAdjustments()" style="margin-left:10px;padding:4px 12px;background:#e55;color:#fff;border:none;border-radius:6px;font-size:0.82rem;cursor:pointer;font-family:inherit;">はい</button>
+      <button onclick="hideResetConfirm()" style="margin-left:6px;padding:4px 12px;background:#eee;color:#666;border:none;border-radius:6px;font-size:0.82rem;cursor:pointer;font-family:inherit;">キャンセル</button>
+    </div>
+  </div>
 </div>
 
 <!-- Summary -->
@@ -678,9 +695,25 @@ function loadState() {
 loadState();
 fullRender();
 
+// ── トースト通知 ──────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
 // ── 手動調整リセット ──────────────────────────────────────
+function showResetConfirm() {
+  document.getElementById('reset-btn').style.display = 'none';
+  document.getElementById('reset-confirm').style.display = 'block';
+}
+function hideResetConfirm() {
+  document.getElementById('reset-btn').style.display = 'block';
+  document.getElementById('reset-confirm').style.display = 'none';
+}
 function resetAdjustments() {
-  if (!confirm('手動調整の入力情報をリセットしますか？')) return;
+  hideResetConfirm();
   state.adjustments = state.members.map(() => 0);
   renderAdjustments();
   renderSummary();
@@ -782,7 +815,7 @@ function backupImport(file) {
         if (el) { el.value = p.memo; el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
       }
       saveState();
-      alert('バックアップファイルから復元完了！');
+      showToast('バックアップファイルから復元完了！');
     } catch(err) {
       alert('ファイルの読み込みに失敗しました。');
     }
