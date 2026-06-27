@@ -792,11 +792,14 @@ async function exportImage() {
   const addBtns = document.querySelectorAll('.btn-add, .btn-backup');
   const memoHr = document.querySelector('#memo')?.previousElementSibling;
 
-  // 非表示にする
+  // 非表示にする（元のdisplay値を保存してから変更）
+  const addBtnsDisplay = [...addBtns].map(el => el.style.display);
+  const btnDisplay = btn.style.display;
   addBtns.forEach(el => el.style.display = 'none');
   btn.style.display = 'none';
   document.body.style.paddingBottom = '16px';
   const lastCard = [...document.querySelectorAll('.card')].at(-1);
+  const lastCardMargin = lastCard ? lastCard.style.marginBottom : '';
   if (lastCard) lastCard.style.marginBottom = '0';
 
   // スクロール位置を記録（window.scrollTo は呼ばない → iOSビューポートリサイズ防止）
@@ -828,12 +831,12 @@ async function exportImage() {
       backgroundColor: '#f0f2f5',
     });
   } finally {
-    // エラーが起きても必ず元に戻す
+    // エラーが起きても必ず元に戻す（保存した値で復元）
     if (memoPlaceholder) memoPlaceholder.replaceWith(memo);
-    addBtns.forEach(el => el.style.display = '');
-    btn.style.display = '';
+    [...addBtns].forEach((el, i) => el.style.display = addBtnsDisplay[i]);
+    btn.style.display = btnDisplay;
     document.body.style.paddingBottom = '';
-    if (lastCard) lastCard.style.marginBottom = '';
+    if (lastCard) lastCard.style.marginBottom = lastCardMargin;
   }
 
   if (!canvas) return;
