@@ -733,12 +733,65 @@ async function exportImage() {
   tab.document.write(`<img src="${img}" style="max-width:100%;">`);
   tab.document.close();
 }
+
+function backupExport() {
+  const memo = document.getElementById('memo')?.value ?? '';
+  const data = {
+    members: state.members,
+    mainPayerIndex: state.mainPayerIndex,
+    items: state.items,
+    adjustments: state.adjustments,
+    memo,
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  a.href = url;
+  a.download = `seisan_backup_${date}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function backupImport(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const p = JSON.parse(e.target.result);
+      if (p.members)                     state.members        = p.members;
+      if (p.mainPayerIndex !== undefined) state.mainPayerIndex = p.mainPayerIndex;
+      if (p.items)                        state.items          = p.items;
+      if (p.adjustments)                  state.adjustments    = p.adjustments;
+      fullRender();
+      if (p.memo !== undefined) {
+        const el = document.getElementById('memo');
+        if (el) { el.value = p.memo; el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+      }
+      saveState();
+    } catch(err) {
+      alert('ファイルの読み込みに失敗しました。');
+    }
+  };
+  reader.readAsText(file);
+}
 </script>
 
 <button id="export-btn" onclick="exportImage()"
-  style="display:block;width:calc(100% - 32px);margin:0 16px 4px;padding:14px;background:#1a3a5c;color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:0.04em;transition:opacity 0.2s;"
+  style="display:block;width:calc(100% - 32px);margin:0 16px 4px;padding:14px;background:#1a3a5c;color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.2s;"
   onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
   📋 精算レポートを出力
 </button>
+<hr style="border:none;border-top:1px solid #ddd;margin:8px 16px;">
+<button onclick="backupExport()"
+  style="display:block;width:calc(100% - 32px);margin:0 16px 4px;padding:14px;background:#fff;color:#1a3a5c;border:1.5px solid #1a3a5c;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.2s;"
+  onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
+  📤 バックアップファイルの作成
+</button>
+<label style="display:block;width:calc(100% - 32px);margin:0 16px 16px;padding:14px;background:#fff;color:#1a3a5c;border:1.5px solid #1a3a5c;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;text-align:center;transition:opacity 0.2s;"
+  onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
+  📥 バックアップファイルから復元
+  <input type="file" accept=".json" style="display:none" onchange="backupImport(this.files[0]); this.value='';">
+</label>
 </body>
 </html>
