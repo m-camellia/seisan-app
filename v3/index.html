@@ -275,9 +275,29 @@
   }
   #toast.show { opacity: 1; }
   #memo::placeholder { color: #999; font-size: 0.85rem; }
+  #img-overlay {
+    display: none; position: fixed; inset: 0;
+    background: #f0f2f5; z-index: 9999;
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+  }
+  #img-overlay.show { display: block; }
+  #img-overlay img { display: block; max-width: 100%; }
+  #img-overlay-close {
+    position: fixed; top: 16px; right: 16px;
+    background: rgba(0,0,0,0.55); color: #fff;
+    border: none; border-radius: 20px;
+    padding: 8px 18px; font-size: 0.9rem;
+    cursor: pointer; font-family: inherit;
+    backdrop-filter: blur(4px); z-index: 10000;
+  }
 </style>
 </head>
 <body>
+
+<div id="img-overlay">
+  <button id="img-overlay-close" onclick="document.getElementById('img-overlay').classList.remove('show')">✕ 閉じる</button>
+  <img src="" alt="精算レポート">
+</div>
 
 <div id="ios-alert-overlay">
   <div id="ios-alert">
@@ -821,29 +841,13 @@ async function exportImage() {
 
   if (!canvas) return;
 
-  // 新しいタブで開く
+  // 同一ページのオーバーレイで表示（新しいタブを開かないのでレイアウト崩れしない）
   const img = canvas.toDataURL('image/png');
-  const tab = window.open();
-  tab.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>精算レポート</title>
-  <style>
-    body { margin: 0; background: #f0f2f5; }
-    img { display: block; max-width: 100%; }
-    #close-btn {
-      position: fixed; top: 16px; right: 16px;
-      background: rgba(0,0,0,0.55); color: #fff;
-      border: none; border-radius: 20px;
-      padding: 8px 18px; font-size: 0.9rem;
-      cursor: pointer; font-family: sans-serif;
-      backdrop-filter: blur(4px); z-index: 999;
-    }
-  </style>
-  </head><body>
-  <button id="close-btn" onclick="window.close()">✕ 閉じる</button>
-  <img src="${img}">
-  </body></html>`);
-  tab.document.close();
+  const overlay = document.getElementById('img-overlay');
+  const imgEl = overlay.querySelector('img');
+  imgEl.src = img;
+  overlay.classList.add('show');
+  overlay.scrollTop = 0;
 }
 
 async function backupExport() {
