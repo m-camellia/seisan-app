@@ -734,7 +734,7 @@ async function exportImage() {
   tab.document.close();
 }
 
-function backupExport() {
+async function backupExport() {
   const memo = document.getElementById('memo')?.value ?? '';
   const data = {
     members: state.members,
@@ -743,12 +743,23 @@ function backupExport() {
     adjustments: state.adjustments,
     memo,
   };
+  const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const filename = `seisan_backup_${date}.json`;
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+
+  // iOS：Web Share API で共有シートを表示（失敗時はダウンロードにフォールバック）
+  try {
+    const file = new File([blob], filename, { type: 'application/json' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: filename });
+      return;
+    }
+  } catch(e) {}
+  // デスクトップ・フォールバック：直接ダウンロード
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   a.href = url;
-  a.download = `seisan_backup_${date}.json`;
+  a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
 }
