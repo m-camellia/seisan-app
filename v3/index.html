@@ -250,6 +250,22 @@
   }
   #ios-dialog .ios-dialog-btns button:first-child { border-right: 0.5px solid #c4c4c6; color: #007aff; }
   #ios-dialog .ios-dialog-btns button:last-child { color: #ff3b30; font-weight: 700; }
+  #ios-alert-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4); z-index: 9997;
+    align-items: center; justify-content: center;
+  }
+  #ios-alert-overlay.show { display: flex; }
+  #ios-alert {
+    background: rgba(242,242,247,0.98);
+    border-radius: 14px; width: 270px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    overflow: hidden; font-family: inherit;
+  }
+  #ios-alert .ios-dialog-body { padding: 16px 20px 12px; text-align: center; }
+  #ios-alert .ios-dialog-title { font-size: 0.95rem; font-weight: 700; color: #1a1a1a; margin-bottom: 6px; }
+  #ios-alert .ios-dialog-msg { font-size: 0.82rem; color: #555; }
+  #ios-alert .ios-alert-btn { display: block; width: 100%; padding: 12px 0; background: none; border: none; border-top: 0.5px solid #c4c4c6; font-size: 0.95rem; font-weight: 700; color: #007aff; cursor: pointer; font-family: inherit; }
   #toast {
     position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
     background: #2a7a4a; color: #fff; padding: 12px 24px;
@@ -262,6 +278,16 @@
 </style>
 </head>
 <body>
+
+<div id="ios-alert-overlay">
+  <div id="ios-alert">
+    <div class="ios-dialog-body">
+      <div class="ios-dialog-title">復元完了</div>
+      <div class="ios-dialog-msg">バックアップファイルから復元しました。</div>
+    </div>
+    <button class="ios-alert-btn" onclick="document.getElementById('ios-alert-overlay').classList.remove('show')">OK</button>
+  </div>
+</div>
 
 <div id="ios-dialog-overlay">
   <div id="ios-dialog">
@@ -722,11 +748,8 @@ loadState();
 fullRender();
 
 // ── トースト通知 ──────────────────────────────────────────
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
+function showRestoreAlert() {
+  document.getElementById('ios-alert-overlay').classList.add('show');
 }
 
 // ── 手動調整リセット ──────────────────────────────────────
@@ -839,7 +862,7 @@ function backupImport(file) {
         if (el) { el.value = p.memo; el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
       }
       saveState();
-      showToast('バックアップファイルから復元完了！');
+      showRestoreAlert();
     } catch(err) {
       alert('ファイルの読み込みに失敗しました。');
     }
