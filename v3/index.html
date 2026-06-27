@@ -794,27 +794,32 @@ async function exportImage() {
     memo.replaceWith(memoPlaceholder);
   }
 
-  // キャプチャ対象：body全体、横幅はテーブルの実幅に合わせる
-  const tableWrap = document.querySelector('.table-wrap');
-  const captureWidth = Math.max(document.body.scrollWidth, tableWrap ? tableWrap.scrollWidth + 32 : 0);
+  let canvas;
+  try {
+    // キャプチャ対象：body全体、横幅はテーブルの実幅に合わせる
+    const tableWrap = document.querySelector('.table-wrap');
+    const captureWidth = Math.max(document.body.scrollWidth, tableWrap ? tableWrap.scrollWidth + 32 : 0);
 
-  const canvas = await html2canvas(document.body, {
-    scale: 2,
-    useCORS: true,
-    width: captureWidth,
-    windowWidth: captureWidth,
-    scrollX: 0,
-    scrollY: 0,
-    backgroundColor: '#f0f2f5',
-  });
+    canvas = await html2canvas(document.body, {
+      scale: 2,
+      useCORS: true,
+      width: captureWidth,
+      windowWidth: captureWidth,
+      scrollX: 0,
+      scrollY: 0,
+      backgroundColor: '#f0f2f5',
+    });
+  } finally {
+    // エラーが起きても必ず元に戻す
+    if (memoPlaceholder) memoPlaceholder.replaceWith(memo);
+    addBtns.forEach(el => el.style.display = '');
+    btn.style.display = '';
+    document.body.style.paddingBottom = '';
+    if (lastCard) lastCard.style.marginBottom = '';
+    window.scrollTo(0, savedScrollY);
+  }
 
-  // 元に戻す
-  if (memoPlaceholder) memoPlaceholder.replaceWith(memo);
-  addBtns.forEach(el => el.style.display = '');
-  btn.style.display = '';
-  document.body.style.paddingBottom = '';
-  if (lastCard) lastCard.style.marginBottom = '';
-  window.scrollTo(0, savedScrollY);
+  if (!canvas) return;
 
   // 新しいタブで開く
   const img = canvas.toDataURL('image/png');
