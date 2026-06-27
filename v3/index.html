@@ -553,8 +553,7 @@ function renderTable() {
 
   const tr2 = document.createElement('tr');
   tr2.className = 'total-row';
-  let fcells = `<td></td>
-    <td class="td-sticky" style="text-align:left">合計</td>
+  let fcells = `<td colspan="2" class="td-sticky" style="text-align:right;padding-right:8px">合計</td>
     <td style="text-align:center;font-variant-numeric:tabular-nums"><div style="width:90px;text-align:right;padding-right:8px;margin:0 auto">${fmt(grandTotal)}</div></td>
     <td></td>`;
   ai.forEach(i => {
