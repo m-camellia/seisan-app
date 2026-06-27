@@ -680,7 +680,7 @@ fullRender();
 // ── 画像出力 ──────────────────────────────────────────────
 async function exportImage() {
   const btn = document.getElementById('export-btn');
-  const addBtns = document.querySelectorAll('.btn-add');
+  const addBtns = document.querySelectorAll('.btn-add, .btn-backup');
   const memoHr = document.querySelector('#memo')?.previousElementSibling;
 
   // 非表示にする
@@ -793,13 +793,13 @@ function backupImport(file) {
   onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
   📋 精算レポートを出力
 </button>
-<hr style="border:none;border-top:1px solid #ddd;margin:8px 16px;">
-<button onclick="backupExport()"
+<hr class="btn-backup" style="border:none;border-top:1px solid #ddd;margin:8px 16px;">
+<button class="btn-backup" onclick="backupExport()"
   style="display:block;width:calc(100% - 32px);margin:0 16px 4px;padding:14px;background:#fff;color:#1a3a5c;border:1.5px solid #1a3a5c;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.2s;"
   onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
   📤 バックアップファイルの作成
 </button>
-<label style="display:block;width:calc(100% - 32px);margin:0 16px 16px;padding:14px;background:#fff;color:#1a3a5c;border:1.5px solid #1a3a5c;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;text-align:center;transition:opacity 0.2s;"
+<label class="btn-backup" style="display:block;width:calc(100% - 32px);margin:0 16px 16px;padding:14px;background:#fff;color:#1a3a5c;border:1.5px solid #1a3a5c;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;text-align:center;transition:opacity 0.2s;"
   onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
   📥 バックアップファイルから復元
   <input type="file" accept=".json" style="display:none" onchange="backupImport(this.files[0]); this.value='';">
