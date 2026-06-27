@@ -755,15 +755,6 @@ async function backupExport() {
   const filename = `seisan_backup_${date}.txt`;
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'text/plain' });
 
-  // iOS：Web Share API で共有シートを表示（失敗時はダウンロードにフォールバック）
-  try {
-    const file = new File([blob], filename, { type: 'text/plain' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: filename });
-      return;
-    }
-  } catch(e) {}
-  // デスクトップ：直接ダウンロード
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
