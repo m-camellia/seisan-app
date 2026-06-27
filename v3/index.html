@@ -799,10 +799,8 @@ async function exportImage() {
   const lastCard = [...document.querySelectorAll('.card')].at(-1);
   if (lastCard) lastCard.style.marginBottom = '0';
 
-  // トップにスクロールしてキャプチャ位置を固定
-  const savedScrollY = window.scrollY;
-  window.scrollTo(0, 0);
-  await new Promise(r => setTimeout(r, 80));
+  // スクロール位置を記録（window.scrollTo は呼ばない → iOSビューポートリサイズ防止）
+  const currentScrollY = window.scrollY;
 
   // textarea → div に差し替え（改行を正しくキャプチャするため）
   const memo = document.getElementById('memo');
@@ -826,7 +824,7 @@ async function exportImage() {
       width: captureWidth,
       windowWidth: captureWidth,
       scrollX: 0,
-      scrollY: 0,
+      scrollY: -currentScrollY,
       backgroundColor: '#f0f2f5',
     });
   } finally {
@@ -836,7 +834,6 @@ async function exportImage() {
     btn.style.display = '';
     document.body.style.paddingBottom = '';
     if (lastCard) lastCard.style.marginBottom = '';
-    window.scrollTo(0, savedScrollY);
   }
 
   if (!canvas) return;
