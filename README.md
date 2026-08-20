@@ -8,6 +8,8 @@
 |-----------|-----|------|
 | v1 | [v1を開く](https://seisan-app.pages.dev/v1/) | 立替払いが1人の場合 |
 | v2 | [v2を開く](https://seisan-app.pages.dev/v2/) | 立替払いが複数人の場合 |
+| v3 | [v3を開く](https://seisan-app.pages.dev/v3/) | v2＋備考欄・レポート画像出力・バックアップ |
+| v4 | [v4を開く](https://seisan-app.pages.dev/v4/) | 飲み会ver. メンバーの酒量で傾斜配分 |
 
 ## 機能
 

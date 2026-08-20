@@ -1,0 +1,15 @@
+{
+  "name": "精算アプリ 飲み会ver.",
+  "short_name": "飲み会精算",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f0f2f5",
+  "theme_color": "#A0144F",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

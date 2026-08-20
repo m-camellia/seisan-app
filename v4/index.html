@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>精算アプリv4 飲み会ver.</title>
+<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="manifest" href="manifest.json">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="飲み会精算">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
+    background: #f0f2f5;
+    color: #1a1a1a;
+    min-height: 100vh;
+    padding: 16px;
+  }
+
+  h1 { text-align: center; font-size: 1.4rem; font-weight: 700; margin-bottom: 20px; color: #1a1a18; }
+
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+
+  .card h2 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 12px;
+  }
+
+  /* Members */
+  .members-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .member-row { display: flex; align-items: center; gap: 6px; }
+
+  .member-num {
+    flex: 0 0 16px; text-align: right;
+    font-size: 0.7rem; color: #ccc; pointer-events: none;
+  }
+
+  .member-row input[type="text"] {
+    flex: 1 1 auto; min-width: 0;
+    border: 1px solid #ddd; border-radius: 8px;
+    padding: 9px 10px; font-size: 0.9rem; outline: none; transition: border-color 0.2s;
+  }
+
+  .member-row input[type="text"]:focus { border-color: #A0144F; }
+
+  .select-level {
+    flex: 0 0 auto; width: 104px;
+    border: 1px solid #ddd; border-radius: 8px;
+    padding: 8px 6px; font-size: 0.82rem; font-weight: 700;
+    outline: none; cursor: pointer; font-family: inherit;
+    -webkit-appearance: none; appearance: none; text-align: center;
+  }
+
+  /* 分類ごとの色分け（lv0=ノンアル 〜 lv3=大酒呑み） */
+  .lv0 { background: #e9f5ec; border-color: #bfdfc8 !important; color: #2a7a4a; }
+  .lv1 { background: #eaf1f8; border-color: #c5d3e0 !important; color: #1a3a5c; }
+  .lv2 { background: #fdf2e3; border-color: #e8d0aa !important; color: #a86a24; }
+  .lv3 { background: #fbeaea; border-color: #edc4c4 !important; color: #c0392b; }
+
+  .btn-del-member {
+    flex: 0 0 auto;
+    background: none; border: none; cursor: pointer; color: #ccc;
+    font-size: 0.9rem; padding: 4px 2px; line-height: 1; transition: color 0.2s;
+  }
+
+  .btn-del-member:hover { color: #e55; }
+
+  /* 傾斜設定 */
+  .weight-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .weight-item { display: flex; flex-direction: column; gap: 4px; text-align: center; }
+  .weight-label { font-size: 0.7rem; font-weight: 700; border-radius: 6px; padding: 3px 0; }
+
+  .weight-input {
+    border: 1px solid #ddd; border-radius: 8px; padding: 7px 4px;
+    font-size: 0.92rem; text-align: center; outline: none; width: 100%;
+    font-variant-numeric: tabular-nums; transition: border-color 0.2s;
+  }
+  .weight-input:focus { border-color: #A0144F; }
+  .weight-input::-webkit-inner-spin-button,
+  .weight-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  .weight-input { -moz-appearance: textfield; }
+
+  .payer-section { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+  .payer-section label { font-size: 0.85rem; color: #666; }
+  .payer-section select {
+    border: 1px solid #ddd; border-radius: 8px; padding: 6px 10px;
+    font-size: 0.88rem; outline: none; cursor: pointer;
+  }
+
+  .payer-badge {
+    display: inline-block; font-size: 0.65rem;
+    background: #A0144F; color: #fff;
+    border-radius: 4px; padding: 1px 5px;
+    margin-left: 4px; vertical-align: middle;
+  }
+
+  .lv-badge {
+    display: inline-block; font-size: 0.62rem; font-weight: 700;
+    border-radius: 4px; padding: 1px 5px;
+    margin-left: 4px; vertical-align: middle;
+  }
+
+  /* Items table */
+  .items-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.88rem; }
+
+  .items-table th {
+    background: #A0144F; color: #fff; padding: 8px 6px;
+    font-weight: 600; font-size: 0.8rem; text-align: center; white-space: nowrap;
+  }
+
+  .th-lv { display: block; font-size: 0.6rem; font-weight: 400; opacity: 0.8; margin-top: 1px; }
+
+  .th-sticky {
+    position: sticky; left: 0; z-index: 3; background: #A0144F;
+    text-align: left; min-width: 110px;
+  }
+
+  .td-sticky {
+    position: sticky; left: 0; z-index: 1; background: #fff;
+    border-right: 1px solid #e8e8e8;
+  }
+
+  .items-table tr:hover .td-sticky { background: #fafafa; }
+  .total-row .td-sticky { background: #fffde7 !important; }
+
+  .items-table td {
+    padding: 6px 4px; border-bottom: 1px solid #f0f0f0;
+    text-align: center; vertical-align: middle;
+  }
+
+  .items-table tr:last-child td { border-bottom: none; }
+  .items-table tr:hover td { background: #fafafa; }
+
+  .input-item {
+    width: 100%; border: none; background: transparent;
+    font-size: 0.88rem; outline: none; padding: 2px 4px;
+  }
+
+  .input-item:focus { background: #fff9fa; border-radius: 4px; }
+
+  .input-amount {
+    width: 90px; border: 1px solid #ddd; background: #fff; border-radius: 8px;
+    font-size: 0.88rem; text-align: right; outline: none;
+    padding: 6px 8px; transition: border-color 0.2s;
+  }
+
+  .input-amount:focus { border-color: #A0144F; background: #fff9fa; }
+
+  .select-payer {
+    border: 1px solid #ddd; border-radius: 6px; padding: 4px 6px;
+    font-size: 0.8rem; outline: none; cursor: pointer;
+    background: #fff; color: #333; max-width: 72px;
+  }
+
+  input[type="checkbox"] { width: 16px; height: 16px; accent-color: #A0144F; cursor: pointer; }
+
+  .per-person { font-size: 0.78rem; color: #9c6b74; font-variant-numeric: tabular-nums; min-height: 1em; }
+
+  /* 均等割（傾斜を使わず単純に人数で割った参考値） */
+  .even-split { font-size: 0.82rem; color: #999; font-variant-numeric: tabular-nums; }
+  .total-row .even-split { color: #888; }
+
+  .btn-add {
+    display: flex; align-items: center; gap: 6px; background: none;
+    border: 1.5px dashed #ccc; border-radius: 8px; padding: 8px 14px;
+    cursor: pointer; font-size: 0.85rem; color: #999; margin-top: 10px;
+    width: 100%; justify-content: center; transition: border-color 0.2s, color 0.2s;
+  }
+
+  .btn-add:hover { border-color: #A0144F; color: #A0144F; }
+
+  .btn-del {
+    background: none; border: none; cursor: pointer; color: #ccc;
+    font-size: 1rem; padding: 2px 6px; border-radius: 4px; transition: color 0.2s;
+  }
+
+  .btn-del:hover { color: #e55; }
+
+  /* Adjustments */
+  .adj-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .adj-item { display: flex; flex-direction: column; gap: 4px; }
+  .adj-label { font-size: 0.78rem; color: #888; font-weight: 600; }
+
+  .adj-input {
+    border: 1px solid #ddd; border-radius: 8px; padding: 8px 10px;
+    font-size: 0.95rem; text-align: right; outline: none;
+    transition: border-color 0.2s; width: 100%;
+  }
+
+  .adj-input:focus { border-color: #A0144F; }
+  .adj-input[type="number"]::-webkit-inner-spin-button,
+  .adj-input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  .adj-input[type="number"] { -moz-appearance: textfield; }
+
+  /* Summary */
+  .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+
+  .summary-card { background: #f9f4f5; border-radius: 10px; padding: 10px 12px; text-align: center; }
+  .summary-card .s-name { font-size: 0.8rem; color: #888; margin-bottom: 4px; }
+  .summary-card .s-amount { font-size: 1.2rem; font-weight: 700; color: #1a1a18; font-variant-numeric: tabular-nums; }
+  .summary-card .s-detail { font-size: 0.72rem; color: #9c6b74; margin-top: 2px; }
+  .summary-card.s-receive .s-amount { color: #2a7a4a; }
+  .summary-card.s-pay .s-amount { color: #c0392b; }
+
+  .settlement-list { list-style: none; }
+  .settlement-list li {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 12px; background: #f9f4f5; border-radius: 8px;
+    margin-bottom: 8px; font-size: 0.9rem;
+  }
+  .settlement-list li:last-child { margin-bottom: 0; }
+  .s-arrow { color: #9c6b74; margin: 0 8px; }
+  .s-pay-amount { font-weight: 700; color: #A0144F; font-variant-numeric: tabular-nums; }
+  .no-settlement { text-align: center; color: #bbb; font-size: 0.9rem; padding: 12px 0; }
+
+  .total-row td { background: #fffde7 !important; font-weight: 700; font-size: 0.9rem; padding-top: 8px; padding-bottom: 8px; }
+
+  .section-divider { border: none; border-top: 1px solid #eee; margin: 12px 0; }
+  .table-wrap { overflow-x: auto; }
+
+  .hint { font-size: 0.72rem; color: #bbb; margin-top: 8px; text-align: center; line-height: 1.5; }
+
+  .total-amount {
+    display: block; width: 90px; text-align: right;
+    padding: 6px 8px; margin: 0 auto; font-variant-numeric: tabular-nums;
+  }
+  @media (max-width: 480px) {
+    .adj-grid, .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    .input-amount { width: 72px; }
+    .total-amount { width: 72px; }
+    .select-payer { max-width: 60px; font-size: 0.75rem; }
+    .select-level { width: 92px; font-size: 0.78rem; padding: 8px 4px; }
+  }
+
+  /* PW overlay */
+  #pw-overlay {
+    position: fixed; inset: 0; background: #f0f2f5;
+    display: flex; align-items: center; justify-content: center; z-index: 9999;
+  }
+
+  .pw-box {
+    background: #fff; border-radius: 16px; padding: 32px 28px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; width: 280px;
+  }
+
+  .pw-box h2 { font-size: 1.1rem; margin-bottom: 6px; color: #1a1a18; }
+  .pw-box p  { font-size: 0.82rem; color: #aaa; margin-bottom: 20px; }
+
+  #pw-input {
+    width: 100%; border: 1px solid #ddd; border-radius: 8px;
+    padding: 10px 14px; font-size: 1rem; outline: none;
+    text-align: center; letter-spacing: 0.2em; margin-bottom: 12px;
+  }
+
+  #pw-input:focus { border-color: #A0144F; }
+
+  #pw-btn {
+    width: 100%; background: #A0144F; color: #fff; border: none;
+    border-radius: 8px; padding: 10px; font-size: 0.95rem;
+    cursor: pointer; transition: opacity 0.2s;
+  }
+
+  #pw-btn:hover { opacity: 0.85; }
+  #pw-error { color: #c0392b; font-size: 0.8rem; margin-top: 8px; min-height: 1em; }
+  #ios-dialog-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4); z-index: 9997;
+    align-items: center; justify-content: center;
+  }
+  #ios-dialog-overlay.show { display: flex; }
+  #ios-dialog {
+    background: rgba(242,242,247,0.98);
+    border-radius: 14px; width: 270px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    overflow: hidden; font-family: inherit;
+  }
+  #ios-dialog .ios-dialog-body { padding: 16px 20px 12px; text-align: center; }
+  #ios-dialog .ios-dialog-title { font-size: 0.95rem; font-weight: 700; color: #1a1a1a; margin-bottom: 6px; }
+  #ios-dialog .ios-dialog-msg { font-size: 0.82rem; color: #555; }
+  #ios-dialog .ios-dialog-btns { display: flex; border-top: 0.5px solid #c4c4c6; }
+  #ios-dialog .ios-dialog-btns button {
+    flex: 1; padding: 12px 0; background: none; border: none;
+    font-size: 0.95rem; cursor: pointer; font-family: inherit;
+  }
+  #ios-dialog .ios-dialog-btns button:first-child { border-right: 0.5px solid #c4c4c6; color: #007aff; }
+  #ios-dialog .ios-dialog-btns button:last-child { color: #ff3b30; font-weight: 700; }
+  #ios-alert-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4); z-index: 9997;
+    align-items: center; justify-content: center;
+  }
+  #ios-alert-overlay.show { display: flex; }
+  #ios-alert {
+    background: rgba(242,242,247,0.98);
+    border-radius: 14px; width: 270px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    overflow: hidden; font-family: inherit;
+  }
+  #ios-alert .ios-dialog-body { padding: 16px 20px 12px; text-align: center; }
+  #ios-alert .ios-dialog-title { font-size: 0.95rem; font-weight: 700; color: #1a1a1a; margin-bottom: 6px; }
+  #ios-alert .ios-dialog-msg { font-size: 0.82rem; color: #555; }
+  #ios-alert .ios-alert-btn { display: block; width: 100%; padding: 12px 0; background: none; border: none; border-top: 0.5px solid #c4c4c6; font-size: 0.95rem; font-weight: 700; color: #007aff; cursor: pointer; font-family: inherit; }
+  #toast {
+    position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+    background: #2a7a4a; color: #fff; padding: 12px 24px;
+    border-radius: 24px; font-size: 0.9rem; font-family: inherit;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 9998;
+    white-space: nowrap;
+  }
+  #toast.show { opacity: 1; }
+  #memo::placeholder { color: #999; font-size: 0.85rem; }
+  #img-overlay {
+    display: none; position: fixed; inset: 0;
+    background: #f0f2f5; z-index: 9999;
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+  }
+  #img-overlay.show { display: block; }
+  #img-overlay img { display: block; max-width: 100%; }
+  #img-overlay-close {
+    position: fixed; top: 16px; right: 16px;
+    background: rgba(0,0,0,0.55); color: #fff;
+    border: none; border-radius: 20px;
+    padding: 8px 18px; font-size: 0.9rem;
+    cursor: pointer; font-family: inherit;
+    backdrop-filter: blur(4px); z-index: 10000;
+  }
+</style>
+</head>
+<body>
+
+<div id="img-overlay">
+  <button id="img-overlay-close" onclick="document.getElementById('img-overlay').classList.remove('show')">✕ 閉じる</button>
+  <img src="" alt="精算レポート">
+</div>
+
+<div id="ios-alert-overlay">
+  <div id="ios-alert">
+    <div class="ios-dialog-body">
+      <div class="ios-dialog-title">復元完了</div>
+      <div class="ios-dialog-msg">バックアップファイルから復元しました。</div>
+    </div>
+    <button class="ios-alert-btn" onclick="document.getElementById('ios-alert-overlay').classList.remove('show')">OK</button>
+  </div>
+</div>
+
+<div id="ios-dialog-overlay">
+  <div id="ios-dialog">
+    <div class="ios-dialog-body">
+      <div class="ios-dialog-title">入力情報をリセット</div>
+      <div class="ios-dialog-msg">手動調整の入力情報をリセットします。この操作は元に戻せません。</div>
+    </div>
+    <div class="ios-dialog-btns">
+      <button onclick="hideResetConfirm()">キャンセル</button>
+      <button onclick="resetAdjustments()">リセット</button>
+    </div>
+  </div>
+</div>
+
+<!-- PW overlay -->
+<div id="pw-overlay">
+  <div class="pw-box">
+    <h2>🍻 飲み会精算</h2>
+    <p>パスワードを入力してください</p>
+    <input id="pw-input" type="password" placeholder="password" inputmode="text">
+    <button id="pw-btn" onclick="checkPw()">入力</button>
+    <div id="pw-error"></div>
+  </div>
+</div>
+
+<script>
+const AUTH_KEY = 'seisan-auth-v4';
+function checkPw() {
+  if (document.getElementById('pw-input').value === 'king') {
+    try { localStorage.setItem(AUTH_KEY, 'ok'); } catch(e) {}
+    document.getElementById('pw-overlay').style.display = 'none';
+  } else {
+    document.getElementById('pw-error').textContent = 'パスワードが違います';
+  }
+}
+document.getElementById('pw-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkPw();
+});
+let authed = false;
+try { authed = localStorage.getItem(AUTH_KEY) === 'ok'; } catch(e) {}
+if (authed) {
+  document.getElementById('pw-overlay').style.display = 'none';
+} else {
+  setTimeout(() => document.getElementById('pw-input').focus(), 100);
+}
+</script>
+
+<h1>🍻 精算</h1>
+
+<!-- Members -->
+<div class="card">
+  <h2>メンバー</h2>
+  <div class="members-list" id="membersList"></div>
+  <button class="btn-add" onclick="addMember()" style="margin-top:10px">＋ メンバーを追加</button>
+  <hr class="section-divider">
+  <h2>傾斜の倍率</h2>
+  <div class="weight-grid" id="weightGrid"></div>
+  <p class="hint">数字が大きいほど支払いが多くなります。<br>倍率は自由に変更できます。</p>
+  <button class="btn-backup" onclick="resetWeights()" style="display:block;width:100%;margin-top:8px;padding:8px;background:none;border:1.5px dashed #ccc;border-radius:8px;font-size:0.82rem;color:#999;cursor:pointer;font-family:inherit;transition:border-color 0.2s,color 0.2s;" onmouseover="this.style.borderColor='#A0144F';this.style.color='#A0144F'" onmouseout="this.style.borderColor='#ccc';this.style.color='#999'">↺ 倍率を初期値に戻す</button>
+  <hr class="section-divider">
+  <div class="payer-section">
+    <label>立替払い主担当：</label>
+    <select id="mainPayerSelect"></select>
+  </div>
+</div>
+
+<!-- Items -->
+<div class="card">
+  <h2>内訳</h2>
+  <div class="table-wrap">
+    <table class="items-table" id="itemsTable">
+      <thead><tr id="headerRow"></tr></thead>
+      <tbody id="itemsBody"></tbody>
+      <tfoot id="itemsFoot"></tfoot>
+    </table>
+  </div>
+  <button class="btn-add" onclick="addItem()">＋ 内訳を追加</button>
+  <hr class="section-divider">
+  <h2>備考</h2>
+  <textarea id="memo" placeholder="メモを入力..." rows="1"
+    style="width:100%;border:1px solid #ddd;border-radius:8px;padding:10px 12px;font-size:0.88rem;font-family:inherit;resize:none;outline:none;color:#1a1a18;line-height:1.6;overflow:hidden;"
+    oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';saveState()"
+    onfocus="this.style.borderColor='#A0144F'"
+    onblur="this.style.borderColor='#ddd'"></textarea>
+</div>
+
+<!-- Adjustments -->
+<div class="card">
+  <h2>手動調整</h2>
+  <div class="adj-grid" id="adjGrid"></div>
+  <p style="font-size:0.75rem;color:#bbb;margin-top:10px;text-align:center">＋ 上乗せ　／　− 値引き</p>
+  <button class="btn-backup" onclick="showResetConfirm()" style="display:block;width:100%;margin-top:10px;padding:8px;background:none;border:1.5px dashed #ccc;border-radius:8px;font-size:0.82rem;color:#999;cursor:pointer;font-family:inherit;transition:border-color 0.2s,color 0.2s;" onmouseover="this.style.borderColor='#e55';this.style.color='#e55'" onmouseout="this.style.borderColor='#ccc';this.style.color='#999'">± 入力情報をリセット</button>
+</div>
+
+<!-- Summary -->
+<div class="card">
+  <h2>各自の負担額</h2>
+  <div class="summary-grid" id="summaryGrid"></div>
+  <hr class="section-divider">
+  <h2>精算方法</h2>
+  <ul class="settlement-list" id="settlementList"></ul>
+</div>
+
+<script>
+// ── 分類（傾斜）の定義 ───────────────────────────────────
+const LEVELS       = ['ノンアル', '小酒呑み', '中酒呑み', '大酒呑み'];
+const LEVEL_SHORT  = ['ノン', '小', '中', '大'];
+const DEFAULT_WEIGHTS = [1, 1.2, 1.5, 2];
+
+// ── State ──────────────────────────────────────────────
+const state = {
+  members: ['まゆ', 'あめ', 'もち', 'あや', 'れい', 'なみ'],
+  // 各メンバーの分類。0=ノンアル 1=小酒呑み 2=中酒呑み 3=大酒呑み
+  levels: [2, 3, 1, 2, 0, 2],
+  // 分類ごとの傾斜倍率（LEVELS と同じ並び）
+  weights: DEFAULT_WEIGHTS.slice(),
+  mainPayerIndex: 0,
+  items: [
+    { name: '1次会', amount: 30000, paidBy: 0, included: [true, true, true, true, true, true] },
+    { name: '2次会', amount: 24000, paidBy: 0, included: [true, true, true, true, true, true] },
+    { name: '3次会', amount:  6000, paidBy: 0, included: [true, true, true, true, true, true] },
+  ],
+  // 初期値は「主担当以外を1,000円単位に端数カット」した状態
+  // （まゆの分は syncMainPayerAdj() が自動で +2655.17 を入れる）
+  adjustments: [0, -793.1, -275.86, -344.83, -896.55, -344.83],
+};
+
+// ── Helpers ─────────────────────────────────────────────
+function fmt(n) {
+  const r = Math.round(n);
+  return (Object.is(r, -0) ? 0 : r).toLocaleString('ja-JP');  // -0 が「-0」と出るのを防ぐ
+}
+function activeIdx() { return state.members.map((_, i) => i); }
+
+// メンバー i の傾斜倍率
+function wt(i) {
+  const lv = state.levels[i] ?? 0;
+  const w = state.weights[lv];
+  return (typeof w === 'number' && isFinite(w) && w >= 0) ? w : 0;
+}
+
+// 倍率の表示用（1.5 → "1.5"、2 → "2"）
+function fmtWeight(w) { return String(Math.round(w * 100) / 100); }
+
+// 項目 item を単純に参加人数で割った金額（傾斜を使わない参考値）
+function evenShareOf(item) {
+  const cnt = activeIdx().filter(i => item.included[i]).length;
+  return cnt > 0 ? item.amount / cnt : 0;
+}
+
+// 項目 item を参加者の傾斜で按分したときの、メンバー mi の負担額
+function shareOf(item, mi) {
+  if (!item.included[mi]) return 0;
+  const totalW = activeIdx().reduce((s, i) => s + (item.included[i] ? wt(i) : 0), 0);
+  if (totalW > 0) return item.amount * wt(mi) / totalW;
+  return evenShareOf(item);   // 全員の倍率が0のときは均等割にフォールバック
+}
+
+function calcBurdens() {
+  return state.members.map((_, mi) =>
+    state.items.reduce((sum, item) => sum + shareOf(item, mi), 0)
+  );
+}
+
+function calcPaid() {
+  return state.members.map((_, mi) =>
+    state.items.reduce((sum, item) => sum + (item.paidBy === mi ? item.amount : 0), 0)
+  );
+}
+
+// ── Render ──────────────────────────────────────────────
+function renderMembers() {
+  const list = document.getElementById('membersList');
+  list.innerHTML = '';
+  state.members.forEach((name, i) => {
+    const lv = state.levels[i] ?? 0;
+    const levelOptions = LEVELS.map((label, li) =>
+      `<option value="${li}" ${lv === li ? 'selected' : ''}>${label}</option>`
+    ).join('');
+
+    const div = document.createElement('div');
+    div.className = 'member-row';
+    div.innerHTML = `
+      <span class="member-num">${i + 1}</span>
+      <input type="text" value="${name}" placeholder="名前を入力"
+        oninput="state.members[${i}]=this.value;"
+        onblur="fullRender();">
+      <select class="select-level lv${lv}" onchange="changeLevel(${i}, +this.value)">
+        ${levelOptions}
+      </select>
+      <button class="btn-del-member" onclick="removeMember(${i})"
+        style="${state.members.length <= 2 ? 'visibility:hidden' : ''}">×</button>
+    `;
+    list.appendChild(div);
+  });
+  renderWeights();
+  renderMainPayer();
+}
+
+function renderWeights() {
+  const grid = document.getElementById('weightGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  LEVELS.forEach((label, li) => {
+    const div = document.createElement('div');
+    div.className = 'weight-item';
+    div.innerHTML = `
+      <span class="weight-label lv${li}">${label}</span>
+      <input class="weight-input" type="number" step="0.1" min="0"
+        value="${fmtWeight(state.weights[li])}"
+        oninput="changeWeight(${li}, this.value)">
+    `;
+    grid.appendChild(div);
+  });
+}
+
+function changeLevel(i, lv) {
+  state.levels[i] = lv;
+  renderMembers();
+  renderTable();
+  renderSummary();
+}
+
+function changeWeight(li, raw) {
+  const v = parseFloat(raw);
+  state.weights[li] = (isNaN(v) || v < 0) ? 0 : v;
+  renderTable();
+  renderSummary();
+}
+
+function resetWeights() {
+  state.weights = DEFAULT_WEIGHTS.slice();
+  renderWeights();
+  renderTable();
+  renderSummary();
+}
+
+function renderMainPayer() {
+  const sel = document.getElementById('mainPayerSelect');
+  if (!sel) return;
+  sel.innerHTML = '';
+  state.members.forEach((name, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = name || `メンバー${i + 1}`;
+    if (i === state.mainPayerIndex) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  sel.onchange = () => {
+    state.mainPayerIndex = +sel.value;
+    syncMainPayerAdj();
+    renderAdjustments();
+    renderSummary();
+  };
+}
+
+function renderTable() {
+  const ai = activeIdx();
+
+  // Header（メンバー列は「名前 ＋ 分類×倍率」の2段）
+  const headerRow = document.getElementById('headerRow');
+  headerRow.innerHTML = '';
+  const headers = ['#', '内容', '合計金額', '支払者', '均等割', ...ai.map(i => null), ''];
+  headers.forEach((text, hi) => {
+    const th = document.createElement('th');
+    if (hi >= 5 && hi < headers.length - 1) {
+      const mi = ai[hi - 5];
+      const lv = state.levels[mi] ?? 0;
+      th.innerHTML = `${state.members[mi] || `メンバー${mi + 1}`}<span class="th-lv">${LEVEL_SHORT[lv]} ×${fmtWeight(state.weights[lv])}</span>`;
+      th.style.minWidth = '58px';
+    } else if (hi === 4) {
+      th.innerHTML = `均等割<span class="th-lv">1人あたり</span>`;
+      th.style.minWidth = '68px';
+    } else {
+      th.textContent = text;
+    }
+    if (hi === 0) th.style.width = '24px';
+    if (hi === 1) th.className = 'th-sticky';
+    if (hi === 2) th.style.minWidth = '96px';
+    if (hi === 3) th.style.minWidth = '72px';
+    if (hi === headers.length - 1) th.style.width = '32px';
+    headerRow.appendChild(th);
+  });
+
+  // Body
+  const tbody = document.getElementById('itemsBody');
+  tbody.innerHTML = '';
+
+  state.items.forEach((item, idx) => {
+    const payerOptions = state.members.map((m, mi) =>
+      `<option value="${mi}" ${item.paidBy === mi ? 'selected' : ''}>${m}</option>`
+    ).join('');
+
+    const tr = document.createElement('tr');
+    let cells = `
+      <td style="color:#bbb;font-size:0.8rem">${idx + 1}</td>
+      <td class="td-sticky">
+        <input class="input-item" type="text" value="${item.name}" placeholder="内容"
+          oninput="state.items[${idx}].name=this.value">
+      </td>
+      <td>
+        <input class="input-amount" type="text" inputmode="numeric"
+          value="${item.amount > 0 ? fmt(item.amount) : ''}" placeholder="0"
+          onfocus="this.value=state.items[${idx}].amount||'';"
+          oninput="const v=parseInt(this.value.replace(/[^0-9]/g,''))||0; state.items[${idx}].amount=v; updateItemDisplay(${idx}); renderSummary();"
+          onblur="this.value=state.items[${idx}].amount>0?fmt(state.items[${idx}].amount):''; renderTable(); renderSummary();">
+      </td>
+      <td>
+        <select class="select-payer"
+          onchange="state.items[${idx}].paidBy=+this.value; renderSummary();">
+          ${payerOptions}
+        </select>
+      </td>
+      <td class="even-split" id="even-${idx}">${evenShareOf(item) > 0 ? fmt(evenShareOf(item)) : ''}</td>
+    `;
+
+    ai.forEach(mi => {
+      const share = shareOf(item, mi);
+      cells += `<td>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+          <input type="checkbox" ${item.included[mi] ? 'checked' : ''}
+            onchange="state.items[${idx}].included[${mi}]=this.checked; renderTable(); renderSummary();">
+          <span class="per-person" id="per-${idx}-${mi}">${item.included[mi] && item.amount > 0 ? fmt(share) : ''}</span>
+        </div>
+      </td>`;
+    });
+
+    cells += `<td><button class="btn-del" onclick="removeItem(${idx})">×</button></td>`;
+    tr.innerHTML = cells;
+    tbody.appendChild(tr);
+  });
+
+  // Footer
+  const tfoot = document.getElementById('itemsFoot');
+  tfoot.innerHTML = '';
+  const burdens = calcBurdens();
+  const grandTotal = state.items.reduce((s, item) => s + item.amount, 0);
+
+  const evenTotal = state.items.reduce((s, item) => s + evenShareOf(item), 0);
+
+  const tr2 = document.createElement('tr');
+  tr2.className = 'total-row';
+  let fcells = `<td></td>
+    <td class="td-sticky" style="text-align:left">合計</td>
+    <td style="text-align:center"><div class="total-amount">${fmt(grandTotal)}</div></td>
+    <td></td>
+    <td class="even-split" id="even-foot">${evenTotal > 0 ? fmt(evenTotal) : ''}</td>`;
+  ai.forEach(i => {
+    fcells += `<td id="foot-${i}" style="font-variant-numeric:tabular-nums">${burdens[i] > 0 ? fmt(burdens[i]) : ''}</td>`;
+  });
+  fcells += '<td></td>';
+  tr2.innerHTML = fcells;
+  tfoot.appendChild(tr2);
+}
+
+function updateItemDisplay(idx) {
+  const item = state.items[idx];
+  const ai = activeIdx();
+
+  ai.forEach(mi => {
+    const span = document.getElementById(`per-${idx}-${mi}`);
+    if (span) span.textContent = item.included[mi] && item.amount > 0 ? fmt(shareOf(item, mi)) : '';
+  });
+
+  const even = document.getElementById(`even-${idx}`);
+  if (even) even.textContent = evenShareOf(item) > 0 ? fmt(evenShareOf(item)) : '';
+
+  const burdens = calcBurdens();
+  ai.forEach(i => {
+    const el = document.getElementById(`foot-${i}`);
+    if (el) el.textContent = burdens[i] > 0 ? fmt(burdens[i]) : '';
+  });
+
+  const evenFoot = document.getElementById('even-foot');
+  if (evenFoot) {
+    const evenTotal = state.items.reduce((s, it) => s + evenShareOf(it), 0);
+    evenFoot.textContent = evenTotal > 0 ? fmt(evenTotal) : '';
+  }
+}
+
+function syncMainPayerAdj() {
+  const mi = state.mainPayerIndex;
+  const othersSum = state.adjustments.reduce((s, v, i) => i === mi ? s : s + v, 0);
+  // 小数を足すと 2655.1700000000005 のような誤差が出るので小数第2位で丸める
+  state.adjustments[mi] = Math.round(-othersSum * 100) / 100;
+}
+
+function renderAdjustments() {
+  const grid = document.getElementById('adjGrid');
+  grid.innerHTML = '';
+  syncMainPayerAdj();
+  activeIdx().forEach(i => {
+    const isMain = i === state.mainPayerIndex;
+    const div = document.createElement('div');
+    div.className = 'adj-item';
+    if (isMain) {
+      const v0 = state.adjustments[i];
+      const v0disp = v0 > 0 ? '+' + v0 : v0 < 0 ? String(v0) : '0';
+      div.innerHTML = `
+        <span class="adj-label" style="color:#A0144F">${state.members[i]}（主担当・自動）</span>
+        <input id="adj-main" class="adj-input" type="text" value="${v0disp}"
+          readonly style="background:#fbf1f3;color:#A0144F;cursor:not-allowed;border-color:#e8ccd2;text-align:right;">
+      `;
+    } else {
+      div.innerHTML = `
+        <span class="adj-label">${state.members[i]}</span>
+        <input class="adj-input" type="number" value="${state.adjustments[i] || ''}" placeholder="0"
+          oninput="const v=parseFloat(this.value); state.adjustments[${i}]=isNaN(v)?0:v; syncMainPayerAdj(); const el=document.getElementById('adj-main'); if(el){ const mv=state.adjustments[state.mainPayerIndex]; el.value=mv>0?'+'+mv:mv<0?String(mv):'0'; } renderSummary();">
+      `;
+    }
+    grid.appendChild(div);
+  });
+}
+
+function renderSummary() {
+  const burdens = calcBurdens();
+  const paid = calcPaid();
+  const ai = activeIdx();
+
+  // 各自の負担額 = 傾斜按分 + 手動調整（合計は必ず内訳合計と一致）
+  const netBurden = ai.map(i => burdens[i] + state.adjustments[i]);
+
+  // 精算の方向：paid - netBurden が正なら受取、負なら支払
+  const balance = ai.map(i => paid[i] - netBurden[i]);
+
+  // Summary cards（各自の負担額を表示）
+  const grid = document.getElementById('summaryGrid');
+  grid.innerHTML = '';
+  ai.forEach(i => {
+    const lv = state.levels[i] ?? 0;
+    const div = document.createElement('div');
+    div.className = 'summary-card';
+    div.innerHTML = `
+      <div class="s-name">${state.members[i]}<span class="lv-badge lv${lv}">${LEVEL_SHORT[lv]}</span>${i === state.mainPayerIndex ? '<span class="payer-badge">主担当</span>' : ''}</div>
+      <div class="s-amount">¥${fmt(netBurden[i])}</div>
+      <div class="s-detail">小計 ¥${fmt(burdens[i])} / 調整 ${state.adjustments[i] >= 0 ? '+' : ''}${fmt(state.adjustments[i])}</div>
+    `;
+    grid.appendChild(div);
+  });
+
+  // Settlement（最小取引数）
+  const ul = document.getElementById('settlementList');
+  ul.innerHTML = '';
+  const settlements = simplifyDebts(ai.map(i => ({ i, b: balance[i] })));
+
+  if (settlements.length === 0) {
+    ul.innerHTML = '<li class="no-settlement">精算不要</li>';
+    saveState();
+    return;
+  }
+  settlements.forEach(({ from, to, amount }) => {
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <span><strong>${state.members[from]}</strong> <span class="s-arrow">→</span> <strong>${state.members[to]}</strong> へお支払い</span>
+      <span class="s-pay-amount">¥${fmt(amount)}</span>
+    `;
+    ul.appendChild(li);
+  });
+  saveState();
+}
+
+function simplifyDebts(balances) {
+  const eps = 1;
+  const receivers = balances.filter(x => x.b > eps).map(x => ({ i: x.i, amt: x.b }));
+  const payers    = balances.filter(x => x.b < -eps).map(x => ({ i: x.i, amt: -x.b }));
+  receivers.sort((a, b) => b.amt - a.amt);
+  payers.sort((a, b) => b.amt - a.amt);
+
+  const result = [];
+  let ri = 0, pi = 0;
+  while (ri < receivers.length && pi < payers.length) {
+    const pay = Math.min(receivers[ri].amt, payers[pi].amt);
+    result.push({ from: payers[pi].i, to: receivers[ri].i, amount: pay });
+    receivers[ri].amt -= pay;
+    payers[pi].amt -= pay;
+    if (receivers[ri].amt < eps) ri++;
+    if (payers[pi].amt < eps) pi++;
+  }
+  return result;
+}
+
+// ── Actions ──────────────────────────────────────────────
+function addItem() {
+  state.items.push({ name: '', amount: 0, paidBy: 0, included: state.members.map(() => true) });
+  renderTable();
+  renderSummary();
+  setTimeout(() => {
+    const rows = document.querySelectorAll('#itemsBody tr');
+    if (rows.length) rows[rows.length - 1].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 50);
+}
+
+function removeItem(idx) {
+  if (state.items.length <= 1) {
+    state.items[0] = { name: '', amount: 0, paidBy: 0, included: state.members.map(() => true) };
+  } else {
+    state.items.splice(idx, 1);
+  }
+  renderTable();
+  renderSummary();
+}
+
+function addMember() {
+  state.members.push('');
+  state.levels.push(2);          // 追加時は「中酒呑み」から
+  state.adjustments.push(0);
+  state.items.forEach(item => item.included.push(true));
+  fullRender();
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('#membersList input[type="text"]');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  }, 50);
+}
+
+function removeMember(i) {
+  if (state.members.length <= 2) return;
+  state.members.splice(i, 1);
+  state.levels.splice(i, 1);
+  state.adjustments.splice(i, 1);
+  state.items.forEach(item => {
+    item.included.splice(i, 1);
+    if (item.paidBy === i) item.paidBy = 0;
+    else if (item.paidBy > i) item.paidBy--;
+  });
+  if (state.mainPayerIndex === i) state.mainPayerIndex = 0;
+  else if (state.mainPayerIndex > i) state.mainPayerIndex--;
+  fullRender();
+}
+
+function fullRender() {
+  renderMembers();
+  renderTable();
+  renderAdjustments();
+  renderSummary();
+  saveState();
+}
+
+// ── 保存・復元 ──────────────────────────────────────────
+const STORAGE_KEY = 'seisan-app-v4';
+
+function collectData() {
+  return {
+    members: state.members,
+    levels: state.levels,
+    weights: state.weights,
+    mainPayerIndex: state.mainPayerIndex,
+    items: state.items,
+    adjustments: state.adjustments,
+    memo: document.getElementById('memo')?.value ?? '',
+  };
+}
+
+// 保存データを state に取り込む（localStorage・バックアップ復元で共用）
+function applyData(p) {
+  if (p.members)                      state.members        = p.members;
+  if (p.levels)                       state.levels         = p.levels;
+  if (p.weights)                      state.weights        = p.weights;
+  if (p.mainPayerIndex !== undefined) state.mainPayerIndex = p.mainPayerIndex;
+  if (p.items)                        state.items          = p.items;
+  if (p.adjustments)                  state.adjustments    = p.adjustments;
+  // levels が足りない・多い場合はメンバー数に合わせる（古いデータ対策）
+  state.levels = state.members.map((_, i) => state.levels[i] ?? 0);
+  if (p.memo !== undefined) {
+    const el = document.getElementById('memo');
+    if (el) { el.value = p.memo; el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+  }
+}
+
+function saveState() {
+  // プライベートブラウズ等で localStorage が使えなくても描画は止めない
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(collectData()));
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return;
+    applyData(JSON.parse(saved));
+  } catch(e) {}
+}
+
+// ── Init ─────────────────────────────────────────────────
+loadState();
+fullRender();
+
+// ── iOS風 通知ダイアログ ──────────────────────────────────
+function showAlert(title, msg) {
+  document.querySelector('#ios-alert .ios-dialog-title').textContent = title;
+  document.querySelector('#ios-alert .ios-dialog-msg').textContent = msg;
+  document.getElementById('ios-alert-overlay').classList.add('show');
+}
+
+// ── 手動調整リセット ──────────────────────────────────────
+function showResetConfirm() {
+  document.getElementById('ios-dialog-overlay').classList.add('show');
+}
+function hideResetConfirm() {
+  document.getElementById('ios-dialog-overlay').classList.remove('show');
+}
+function resetAdjustments() {
+  hideResetConfirm();
+  state.adjustments = state.members.map(() => 0);
+  renderAdjustments();
+  renderSummary();
+}
+
+// ── 画像出力 ──────────────────────────────────────────────
+async function exportImage() {
+  const btn = document.getElementById('export-btn');
+  const addBtns = document.querySelectorAll('.btn-add, .btn-backup');
+  const memoHr = document.querySelector('#memo')?.previousElementSibling;
+
+  // 非表示にする（元のdisplay値を保存してから変更）
+  const addBtnsDisplay = [...addBtns].map(el => el.style.display);
+  const btnDisplay = btn.style.display;
+  addBtns.forEach(el => el.style.display = 'none');
+  btn.style.display = 'none';
+  document.body.style.paddingBottom = '16px';
+  const lastCard = [...document.querySelectorAll('.card')].at(-1);
+  const lastCardMargin = lastCard ? lastCard.style.marginBottom : '';
+  if (lastCard) lastCard.style.marginBottom = '0';
+
+  // スクロール位置を記録（window.scrollTo は呼ばない → iOSビューポートリサイズ防止）
+  const currentScrollY = window.scrollY;
+
+  // textarea → div に差し替え（改行を正しくキャプチャするため）
+  const memo = document.getElementById('memo');
+  let memoPlaceholder = null;
+  if (memo) {
+    memoPlaceholder = document.createElement('div');
+    memoPlaceholder.textContent = memo.value;
+    memoPlaceholder.style.cssText = `width:100%;border:1px solid #ddd;border-radius:8px;padding:10px 12px;font-size:0.88rem;font-family:inherit;color:#1a1a18;line-height:1.6;white-space:pre-wrap;word-break:break-word;min-height:${memo.offsetHeight}px;`;
+    memo.replaceWith(memoPlaceholder);
+  }
+
+  let canvas;
+  try {
+    // キャプチャ対象：body全体、横幅はテーブルの実幅に合わせる
+    const tableWrap = document.querySelector('.table-wrap');
+    const captureWidth = Math.max(document.body.scrollWidth, tableWrap ? tableWrap.scrollWidth + 32 : 0);
+
+    canvas = await html2canvas(document.body, {
+      scale: 2,
+      useCORS: true,
+      width: captureWidth,
+      windowWidth: captureWidth,
+      scrollX: 0,
+      scrollY: -currentScrollY,
+      backgroundColor: '#f0f2f5',
+    });
+  } finally {
+    // エラーが起きても必ず元に戻す（保存した値で復元）
+    if (memoPlaceholder) memoPlaceholder.replaceWith(memo);
+    [...addBtns].forEach((el, i) => el.style.display = addBtnsDisplay[i]);
+    btn.style.display = btnDisplay;
+    document.body.style.paddingBottom = '';
+    if (lastCard) lastCard.style.marginBottom = lastCardMargin;
+  }
+
+  if (!canvas) return;
+
+  // 同一ページのオーバーレイで表示（新しいタブを開かないのでレイアウト崩れしない）
+  const img = canvas.toDataURL('image/png');
+  const overlay = document.getElementById('img-overlay');
+  const imgEl = overlay.querySelector('img');
+  imgEl.src = img;
+  overlay.classList.add('show');
+  overlay.scrollTop = 0;
+}
+
+async function backupExport() {
+  const data = collectData();
+  const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const filename = `nomikai_seisan_backup_${date}.txt`;
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'text/plain' });
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function backupImport(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      applyData(JSON.parse(e.target.result));
+      fullRender();
+      saveState();
+      showAlert('復元完了', 'バックアップファイルから復元しました。');
+    } catch(err) {
+      showAlert('復元できません', 'ファイルの読み込みに失敗しました。');
+    }
+  };
+  reader.readAsText(file);
+}
+</script>
+
+<button id="export-btn" onclick="exportImage()"
+  style="display:block;width:calc(100% - 32px);margin:0 16px 4px;padding:14px;background:#A0144F;color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.2s;"
+  onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+  📋 精算レポートを出力
+</button>
+<hr class="btn-backup" style="border:none;border-top:1px solid #ddd;margin:8px 16px;">
+<button class="btn-backup" onclick="backupExport()"
+  style="display:block;width:calc(100% - 32px);margin:0 16px 4px;padding:14px;background:#fff;color:#A0144F;border:1.5px solid #A0144F;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.2s;"
+  onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
+  📤 バックアップファイルの作成
+</button>
+<label class="btn-backup" style="display:block;width:calc(100% - 32px);margin:0 16px 16px;padding:14px;background:#fff;color:#A0144F;border:1.5px solid #A0144F;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;text-align:center;transition:opacity 0.2s;"
+  onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
+  📥 バックアップファイルから復元
+  <input type="file" accept=".json,.txt" style="display:none" onchange="backupImport(this.files[0]); this.value='';">
+</label>
+<div id="toast"></div>
+</body>
+</html>
