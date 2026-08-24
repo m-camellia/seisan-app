@@ -62,9 +62,10 @@
   .select-level {
     flex: 0 0 auto; width: 44px;
     border: 1px solid #ddd; border-radius: 8px;
-    padding: 7px 2px; font-size: 0.8rem; font-weight: 700;
+    padding: 7px 0; font-size: 0.8rem; font-weight: 700;
     outline: none; cursor: pointer; font-family: inherit;
-    -webkit-appearance: none; appearance: none; text-align: center;
+    -webkit-appearance: none; appearance: none;
+    text-align: center; text-align-last: center; -moz-text-align-last: center;
   }
 
   /* 分類ごとの色分け（lv0=ノンアル 〜 lv3=大酒呑み） */
@@ -74,9 +75,9 @@
   .lv3 { background: #fbeaea; border-color: #edc4c4 !important; color: #c0392b; }
 
   .btn-del-member {
-    flex: 0 0 auto;
+    flex: 0 0 auto; margin-left: 6px;
     background: none; border: none; cursor: pointer; color: #ccc;
-    font-size: 0.9rem; padding: 4px 2px; line-height: 1; transition: color 0.2s;
+    font-size: 0.9rem; padding: 6px 4px; line-height: 1; transition: color 0.2s;
   }
 
   .btn-del-member:hover { color: #e55; }
@@ -247,10 +248,10 @@
     .total-amount { width: 72px; }
     .select-payer { max-width: 60px; font-size: 0.75rem; }
     .members-list { gap: 6px; }
-    .member-row { gap: 2px; }
+    .member-row { gap: 3px; }
     .member-row input[type="text"] { padding: 9px 4px; font-size: 0.82rem; }
     .select-level { width: 36px; font-size: 0.72rem; padding: 6px 0; }
-    .btn-del-member { padding: 4px 0; }
+    .btn-del-member { margin-left: 5px; padding: 5px 3px; }
   }
 
   /* PW overlay */
@@ -420,7 +421,7 @@ if (authed) {
   <hr class="section-divider">
   <h2>傾斜の倍率</h2>
   <div class="weight-grid" id="weightGrid"></div>
-  <p class="hint">数字が大きいほど支払いが多くなります。<br>倍率は自由に変更できます。</p>
+  <p class="hint">数字が大きいほど支払いが多くなります<br>倍率は自由に変更できます</p>
   <button class="btn-backup" onclick="resetWeights()" style="display:block;width:100%;margin-top:8px;padding:8px;background:none;border:1.5px dashed #ccc;border-radius:8px;font-size:0.82rem;color:#999;cursor:pointer;font-family:inherit;transition:border-color 0.2s,color 0.2s;" onmouseover="this.style.borderColor='#A0144F';this.style.color='#A0144F'" onmouseout="this.style.borderColor='#ccc';this.style.color='#999'">↺ 倍率を初期値に戻す</button>
   <hr class="section-divider">
   <div class="payer-section">
@@ -470,24 +471,24 @@ if (authed) {
 // ── 分類（傾斜）の定義 ───────────────────────────────────
 const LEVELS       = ['ノンアル', '小酒呑み', '中酒呑み', '大酒呑み'];
 const LEVEL_SHORT  = ['ノン', '小', '中', '大'];
-const DEFAULT_WEIGHTS = [1, 1.2, 1.5, 1.8];
+const DEFAULT_WEIGHTS = [1, 1.5, 1.6, 1.7];
 
 // ── State ──────────────────────────────────────────────
 const state = {
-  members: ['まゆ', 'あめ', 'もち', 'あや', 'れい', 'なみ'],
+  members: ['まゆ', 'あや', 'れい', 'もち', 'なみ', 'あめ', 'ぬま', 'にわ', 'まつ'],
   // 各メンバーの分類。0=ノンアル 1=小酒呑み 2=中酒呑み 3=大酒呑み
-  levels: [2, 3, 1, 2, 0, 2],
+  levels: [2, 0, 0, 1, 2, 3, 3, 3, 3],
   // 分類ごとの傾斜倍率（LEVELS と同じ並び）
   weights: DEFAULT_WEIGHTS.slice(),
   mainPayerIndex: 0,
   items: [
-    { name: '1次会', amount: 30000, paidBy: 0, included: [true, true, true, true, true, true] },
-    { name: '2次会', amount: 24000, paidBy: 0, included: [true, true, true, true, true, true] },
-    { name: '3次会', amount:  6000, paidBy: 0, included: [true, true, true, true, true, true] },
+    { name: '1次会', amount: 45000, paidBy: 0, included: Array(9).fill(true) },
+    { name: '2次会', amount: 36000, paidBy: 0, included: Array(9).fill(true) },
+    { name: '3次会', amount:  9000, paidBy: 0, included: Array(9).fill(true) },
   ],
   // 初期値は「主担当以外を1,000円単位に端数カット」した状態
-  // （まゆの分は syncMainPayerAdj() が自動で +2655.17 を入れる）
-  adjustments: [0, -793.1, -275.86, -344.83, -896.55, -344.83],
+  // （まゆの分は syncMainPayerAdj() が自動で +1333 を入れる）
+  adjustments: [0, -667, -667, -1000, -1667, 667, 667, 667, 667],
 };
 
 // ── Helpers ─────────────────────────────────────────────
