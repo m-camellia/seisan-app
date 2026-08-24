@@ -373,7 +373,7 @@
     </div>
     <div class="ios-dialog-btns">
       <button onclick="hideResetConfirm()">キャンセル</button>
-      <button onclick="resetAdjustments()">リセット</button>
+      <button id="ios-dialog-confirm-btn" onclick="runConfirmedAction()">リセット</button>
     </div>
   </div>
 </div>
@@ -960,18 +960,46 @@ function showAlert(title, msg) {
   document.getElementById('ios-alert-overlay').classList.add('show');
 }
 
-// ── 手動調整リセット ──────────────────────────────────────
-function showResetConfirm() {
+// ── iOS風 確認ダイアログ（汎用） ─────────────────────────────
+let pendingConfirmAction = null;
+function showConfirm(title, msg, btnLabel, onConfirm) {
+  document.querySelector('#ios-dialog .ios-dialog-title').textContent = title;
+  document.querySelector('#ios-dialog .ios-dialog-msg').textContent = msg;
+  document.getElementById('ios-dialog-confirm-btn').textContent = btnLabel;
+  pendingConfirmAction = onConfirm;
   document.getElementById('ios-dialog-overlay').classList.add('show');
 }
 function hideResetConfirm() {
   document.getElementById('ios-dialog-overlay').classList.remove('show');
+  pendingConfirmAction = null;
+}
+function runConfirmedAction() {
+  const action = pendingConfirmAction;
+  hideResetConfirm();
+  if (action) action();
+}
+
+function showResetConfirm() {
+  showConfirm('入力情報をリセット', '手動調整の入力情報をリセットします。この操作は元に戻せません。', 'リセット', resetAdjustments);
 }
 function resetAdjustments() {
-  hideResetConfirm();
   state.adjustments = state.members.map(() => 0);
   renderAdjustments();
   renderSummary();
+}
+
+// ── 全データをリセット（保存データ＝いわゆる「キャッシュ」のクリア） ──
+function showResetAllConfirm() {
+  showConfirm(
+    '全データをリセット',
+    'メンバー・内訳・傾斜倍率・手動調整・備考など、保存されているすべてのデータを消して初期状態に戻します。この操作は元に戻せません。',
+    '全て消す',
+    resetAllData
+  );
+}
+function resetAllData() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+  location.reload();
 }
 
 // ── 画像出力 ──────────────────────────────────────────────
@@ -1087,6 +1115,12 @@ function backupImport(file) {
   📥 バックアップファイルから復元
   <input type="file" accept=".json,.txt" style="display:none" onchange="backupImport(this.files[0]); this.value='';">
 </label>
+<hr class="btn-backup" style="border:none;border-top:1px solid #ddd;margin:8px 16px;">
+<button class="btn-backup" onclick="showResetAllConfirm()"
+  style="display:block;width:calc(100% - 32px);margin:0 16px 16px;padding:14px;background:#fff;color:#c0392b;border:1.5px solid #e8b8b0;border-radius:12px;font-size:0.92rem;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.2s;"
+  onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
+  🗑 全データをリセット（保存データをクリア）
+</button>
 <div id="toast"></div>
 </body>
 </html>
